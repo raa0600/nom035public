@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOM-035 Evaluación</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/favicon_lagacela.svg" type="image/svg+xml">
+</head>
+
+<body>
+    <!-- Pantalla de autenticación -->
+    <div id="auth-screen" class="main-container">
+        <div class="logo">
+            <img src="img/logo_lagacela_iso.svg" alt="NOM-035" class="logo-img">
+            <!--<img src="img/logo_lagacela.png" alt="NOM-035" class="logo-img">-->
+        </div>
+        <form id="auth-form">
+            <input type="email" id="auth-email" placeholder="usuario" required>
+            <input type="password" id="auth-password" placeholder="contraseña" required>
+            <button type="button" id="login-btn">iniciar sesión</button>
+            <p id="auth-error"></p>
+        </form>
+    </div>
+
+    <!-- App principal -->
+    <div id="app-screen" class="main-container hidden">
+        <div class="app-header">
+            <span id="user-email"></span>
+            <button id="logout-btn">Cerrar sesión</button>
+        </div>
+        <div class="logo">NOM-035</div>
+
+        <div id="home-screen">
+            <div class="intro-bar" id="open-menu">
+                <span class="icon-holo icon-note"></span>
+                Evaluación de Riesgos Psicosociales
+            </div>
+        </div>
+
+        <div id="type-selection" class="hidden">
+            <div class="cards-wrapper">
+                <div class="card" data-type="nueva">
+                    <div class="card-icon"></div>
+                    <div class="card-title">Iniciar evaluación</div>
+                </div>
+                <div class="card" data-type="continuar">
+                    <div class="card-icon"></div>
+                    <div class="card-title">Continuar evaluación</div>
+                </div>
+                <div class="card" data-type="reportes">
+                    <div class="card-icon"></div>
+                    <div class="card-title">Ver reportes</div>
+                </div>
+                <!-- Nueva tarjeta: Gestión de usuarios (solo admin) -->
+                <div class="card" data-type="usuarios">
+                    <div class="card-icon"></div>
+                    <div class="card-title">Gestión de usuarios</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="form-container" class="hidden"></div>
+        <div id="report-container" class="hidden"></div>
+    </div>
+
+    <!-- Script externo -->
+    <script src="script.js"></script>
+</body>
+
+</html>
