@@ -13,6 +13,8 @@ const login = async (req, res, next) => {
         }
 
         const pool = getPool();
+
+        // Buscar usuario
         const result = await pool.request()
             .input('email', sql.NVarChar, email)
             .query('SELECT * FROM USUARIO WHERE email = @email');
@@ -24,8 +26,8 @@ const login = async (req, res, next) => {
 
         const user = result.recordset[0];
         console.log('✅ Usuario encontrado:', user.email);
-        console.log('🔑 Hash almacenado:', user.contraseña_hash);
 
+        // Verificar contraseña
         const isValid = await bcrypt.compare(password, user.contraseña_hash);
         console.log('🔐 ¿Contraseña válida?', isValid);
 
@@ -34,6 +36,45 @@ const login = async (req, res, next) => {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
+        // ---------- NUEVO: Verificar y crear empleado si no existe ----------
+        if (!user.id_empleado) {
+            console.log('🔄 Usuario sin empleado asociado. Creando...');
+            
+            // Buscar si ya existe un empleado con ese email
+            const empleadoExistente = await pool.request()
+                .input('email', sql.NVarChar, email)
+                .query('SELECT id_empleado FROM EMPLEADO WHERE email = @email');
+
+            let id_empleado;
+            if (empleadoExistente.recordset.length > 0) {
+                id_empleado = empleadoExistente.recordset[0].id_empleado;
+                console.log('✅ Empleado encontrado por email');
+            } else {
+                // Crear nuevo empleado
+                const resultEmpleado = await pool.request()
+                    .input('nombre', sql.NVarChar, user.nombre)
+                    .input('email', sql.NVarChar, user.email)
+                    .input('departamento', sql.NVarChar, user.departamento || null)
+                    .query(`
+                        INSERT INTO EMPLEADO (nombre, email, departamento_seccion_area)
+                        VALUES (@nombre, @email, @departamento);
+                        SELECT SCOPE_IDENTITY() AS id;
+                    `);
+                id_empleado = resultEmpleado.recordset[0].id;
+                console.log('✅ Nuevo empleado creado');
+            }
+
+            // Vincular usuario con empleado
+            await pool.request()
+                .input('id_usuario', sql.Int, user.id_usuario)
+                .input('id_empleado', sql.Int, id_empleado)
+                .query('UPDATE USUARIO SET id_empleado = @id_empleado WHERE id_usuario = @id_usuario');
+
+            // Actualizar objeto user
+            user.id_empleado = id_empleado;
+        }
+
+        // Generar token
         const token = jwt.sign(
             { id: user.id_usuario, email: user.email, rol: user.id_rol },
             process.env.JWT_SECRET,
@@ -89,7 +130,4 @@ const register = async (req, res, next) => {
     }
 };
 
-// ============================================================
-// EXPORTAR CORRECTAMENTE
-// ============================================================
 module.exports = { login, register };

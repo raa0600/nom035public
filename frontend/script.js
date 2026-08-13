@@ -51,15 +51,20 @@ function showApp() {
     const userRol = localStorage.getItem('userRol');
     const isAdmin = userRol === '1';
 
+    const nuevaCard = document.querySelector('.card[data-type="nueva"]');
+    const continuarCard = document.querySelector('.card[data-type="continuar"]');
     const reportCard = document.querySelector('.card[data-type="reportes"]');
     const usuariosCard = document.querySelector('.card[data-type="usuarios"]');
 
+    if (nuevaCard) nuevaCard.style.display = 'flex';
+    if (continuarCard) continuarCard.style.display = 'flex';
+
     if (isAdmin) {
-        reportCard.style.display = 'flex';
-        usuariosCard.style.display = 'flex';
+        if (reportCard) reportCard.style.display = 'flex';
+        if (usuariosCard) usuariosCard.style.display = 'flex';
     } else {
-        reportCard.style.display = 'none';
-        usuariosCard.style.display = 'none';
+        if (reportCard) reportCard.style.display = 'none';
+        if (usuariosCard) usuariosCard.style.display = 'none';
     }
 }
 
@@ -95,9 +100,9 @@ typeSelection.addEventListener('click', (e) => {
     typeSelection.classList.add('hidden');
 
     if (type === 'nueva') {
-        mostrarMensaje('Iniciar nueva evaluación', 'Pronto podrás comenzar la encuesta NOM-035.', 'nueva');
+        iniciarEvaluacion();
     } else if (type === 'continuar') {
-        mostrarMensaje('Continuar evaluación', 'Aquí aparecerán las evaluaciones guardadas.', 'continuar');
+        continuarEvaluacion();
     } else if (type === 'reportes') {
         mostrarMensaje(' Reportes', 'Próximamente podrás ver reportes de evaluaciones.', 'reportes');
     } else if (type === 'usuarios') {
@@ -114,12 +119,15 @@ function mostrarMensaje(titulo, mensaje, tipo) {
     formContainer.innerHTML = `
         <button type="button" class="back-btn" id="back-btn">← Atrás</button>
         <div style="color:white; text-align:center; padding:2rem;">
-            <h2 class="form-title">
+            <h2 class="form-title" style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
                 ${iconClass ? `<span class="${iconClass}"></span>` : ''}
                 ${titulo}
             </h2>
             <p>${mensaje}</p>
-            <p style="margin-top:1rem; font-size:0.8rem; opacity:0.7;">✅ Backend funcionando correctamente</p>
+<p class="mensaje-estado">
+    <span class="icono-check"></span>
+    Backend funcionando correctamente
+</p>
         </div>
     `;
     formContainer.classList.remove('hidden');
@@ -131,9 +139,12 @@ function mostrarMensajeError(titulo, mensaje) {
     reportContainer.innerHTML = `
         <button type="button" class="back-btn" id="back-btn-report">← Atrás</button>
         <div style="color:white; text-align:center; padding:2rem;">
-            <h2>${titulo}</h2>
+            <h2 style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                <span class="icono-candado"></span>
+                ${titulo}
+            </h2>
             <p>${mensaje}</p>
-            <p style="margin-top:1rem; font-size:0.8rem; opacity:0.7;">🔒 Acceso restringido</p>
+            <p style="margin-top:1rem; font-size:0.8rem; opacity:0.7;">Acceso restringido</p>
         </div>
     `;
     reportContainer.classList.remove('hidden');
@@ -221,8 +232,12 @@ async function mostrarGestionUsuarios() {
                         <option value="3" selected>Empleado</option>
                     </select>
 
-                    <button type="submit" class="campo-gestion" style="margin-top:1rem;">Crear usuario</button>
-                    <button type="button" id="cancelar-creacion" style="background:transparent; border:1px solid rgba(255,255,255,0.3); border-radius:30px; color:#fff; padding:8px; margin-top:0.5rem; cursor:pointer;">Cancelar</button>
+                    <div style="display:flex; flex-direction:column; gap:0.8rem; width:100%; align-items:center; margin-top:0.5rem;">
+                        <button type="submit" class="campo-gestion" style="margin:0;">Crear usuario</button>
+                        <button type="button" id="cancelar-creacion" class="campo-gestion" style="margin:0; background:transparent; border:1px solid rgba(255,255,255,0.3); border-radius:30px; color:#fff; font-size:1.1rem; padding:12px; cursor:pointer; transition:0.3s; width:100%; max-width:400px;">
+                            Cancelar
+                        </button>
+                    </div>
                 </form>
                 <div id="mensaje-creacion" style="margin-top:0.5rem; text-align:center;"></div>
             </div>
@@ -234,17 +249,14 @@ async function mostrarGestionUsuarios() {
     formContainer.classList.add('hidden');
     document.getElementById('back-btn-usuarios').addEventListener('click', goBack);
 
-    // ---- EVENTO: CLICK EN TARJETA "CREAR USUARIO" ----
     document.getElementById('crear-usuario-card').addEventListener('click', () => {
         mostrarFormularioCreacion();
     });
 
-    // ---- EVENTO: CANCELAR CREACIÓN ----
     document.getElementById('cancelar-creacion')?.addEventListener('click', () => {
         ocultarFormularioCreacion();
     });
 
-    // ---- EVENTO: ENVÍO DEL FORMULARIO DE CREACIÓN ----
     document.getElementById('form-crear-usuario')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nombre = document.getElementById('nombre-usuario').value.trim();
@@ -253,7 +265,9 @@ async function mostrarGestionUsuarios() {
         const id_rol = parseInt(document.getElementById('rol-usuario').value);
 
         const mensajeDiv = document.getElementById('mensaje-creacion');
-        mensajeDiv.innerHTML = '<p style="color:white;">⏳ Creando usuario...</p>';
+        mensajeDiv.innerHTML = `<p class="mensaje-estado" style="color:#facf29;">
+    <span class="icono-loader-amarillo"></span> Creando usuario...
+</p>`;
 
         try {
             const res = await fetch('/api/usuarios', {
@@ -267,22 +281,31 @@ async function mostrarGestionUsuarios() {
             const data = await res.json();
 
             if (!res.ok) {
-                mensajeDiv.innerHTML = `<p style="color:#FFA500;">❌ ${data.error || 'Error al crear usuario'}</p>`;
+                mensajeDiv.innerHTML = `<p class="mensaje-estado" style="color:#FFA500;">❌ ${data.error || 'Error al crear usuario'}</p>`;
                 return;
             }
 
-            mensajeDiv.innerHTML = `<p style="color:#90EE90;">✅ Usuario creado exitosamente: ${data.nombre} (${data.email})</p>`;
-            document.getElementById('nombre-usuario').value = '';
-            document.getElementById('email-usuario').value = '';
-            document.getElementById('password-usuario').value = '';
-            ocultarFormularioCreacion();
-            mostrarGestionUsuarios();
+// Mostrar mensaje de éxito sin nombre/email
+mensajeDiv.innerHTML = `
+    <p class="mensaje-estado" style="color:#facf29;">
+        <span class="icono-check-amarillo"></span>
+        Usuario creado exitosamente.
+    </p>
+`;
+// Limpiar campos
+document.getElementById('nombre-usuario').value = '';
+document.getElementById('email-usuario').value = '';
+document.getElementById('password-usuario').value = '';
+// Ocultar formulario y recargar la tabla después de 1.5 segundos
+setTimeout(() => {
+    ocultarFormularioCreacion();
+    mostrarGestionUsuarios();
+}, 1500);
         } catch (err) {
             mensajeDiv.innerHTML = `<p style="color:#FF6B6B;">❌ Error de conexión: ${err.message}</p>`;
         }
     });
 
-    // ---- EVENTOS: EDICIÓN Y ELIMINACIÓN ----
     document.querySelectorAll('.editar-usuario').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.dataset.id;
@@ -293,7 +316,6 @@ async function mostrarGestionUsuarios() {
         });
     });
 
-    // ---- EVENTO: RESTABLECER CONTRASEÑA (GENERAR Y MOSTRAR) ----
     document.querySelectorAll('.reset-password').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
@@ -309,6 +331,224 @@ async function mostrarGestionUsuarios() {
             }
         });
     });
+}
+
+// ============================================================
+// EVALUACIONES - Guía I y Guía III
+// ============================================================
+
+async function iniciarEvaluacion() {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/evaluacion/iniciar', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al iniciar evaluación');
+        const idEvaluacion = data.id_evaluacion;
+        cargarGuiaI(idEvaluacion);
+    } catch (err) {
+        alert('❌ ' + err.message);
+    }
+}
+
+async function cargarGuiaI(idEvaluacion) {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/evaluacion/guia-i/preguntas', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const preguntas = await res.json();
+        if (!res.ok) throw new Error('Error al cargar preguntas de la Guía I');
+
+        const secciones = {
+            I: preguntas.slice(0, 6),
+            II: preguntas.slice(6, 8),
+            III: preguntas.slice(8, 15),
+            IV: preguntas.slice(15, 20)
+        };
+        mostrarGuiaI(idEvaluacion, secciones);
+    } catch (err) {
+        alert('❌ ' + err.message);
+    }
+}
+
+function mostrarGuiaI(idEvaluacion, secciones) {
+    const nombresSecciones = {
+        I: 'Acontecimiento traumático severo',
+        II: 'Recuerdos persistentes sobre el acontecimiento',
+        III: 'Esfuerzo por evitar circunstancias parecidas',
+        IV: 'Afectación'
+    };
+
+    let html = `
+        <button type="button" class="back-btn" id="back-btn-guia-i">← Atrás</button>
+        <div style="color:white; padding:1rem; max-height:80vh; overflow-y:auto;" class="scroll-guia-i">
+            <h2 class="form-title" style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+    <span class="icono-file-text"></span>
+    Guía de Referencia I
+</h2>
+<p style="margin-bottom:1.5rem; font-size:0.9rem; opacity:0.8; text-align:center;">
+    Responda las siguientes preguntas con <strong>Sí</strong> o <strong>No</strong>.
+</p>
+            <form id="form-guia-i">
+    `;
+
+    for (const [seccion, preguntas] of Object.entries(secciones)) {
+        html += `<h3 style="margin-top:1.5rem; margin-bottom:0.5rem; font-size:1.1rem; color:rgba(255,255,255,0.9);">${nombresSecciones[seccion]}</h3>`;
+        preguntas.forEach(p => {
+            html += `
+                <div style="margin-bottom:0.8rem; padding:0.5rem; background:rgba(255,255,255,0.05); border-radius:8px;">
+                    <p style="margin:0 0 0.3rem 0; font-size:0.95rem;">${p.texto}</p>
+                    <div style="display:flex; gap:1rem;">
+                        <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                            <input type="radio" name="pregunta_${p.id_pregunta_guia_i}" value="1" required> Sí
+                        </label>
+                        <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                            <input type="radio" name="pregunta_${p.id_pregunta_guia_i}" value="0" required> No
+                        </label>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    html += `
+                <button type="submit" style="margin-top:1.5rem;">Enviar respuestas</button>
+            </form>
+            <div id="mensaje-guia-i"></div>
+        </div>
+    `;
+
+    formContainer.innerHTML = html;
+    document.getElementById('back-btn-guia-i').addEventListener('click', goBack);
+    formContainer.classList.remove('hidden');
+    reportContainer.classList.add('hidden');
+
+    document.getElementById('form-guia-i').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const respuestas = [];
+        for (const [key, value] of formData.entries()) {
+            const id_pregunta = parseInt(key.split('_')[1]);
+            respuestas.push({ id_pregunta, respuesta: value === '1' });
+        }
+        await guardarGuiaI(idEvaluacion, respuestas);
+    });
+}
+
+async function guardarGuiaI(idEvaluacion, respuestas) {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`/api/evaluacion/${idEvaluacion}/guia-i`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ respuestas })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al guardar respuestas');
+
+        if (data.requiereCanalizacion) {
+            document.getElementById('mensaje-guia-i').innerHTML = `
+                <div style="margin-top:1rem; padding:1rem; background:rgba(255,0,0,0.2); border-radius:12px; border:1px solid rgba(255,0,0,0.3);">
+                    <h3 style="color:#ff6b6b;">⚠️ Se requiere canalización a atención clínica</h3>
+                    <p>${data.detalle.seccionI}</p>
+                    <p>${data.detalle.seccionII}</p>
+                    <p>${data.detalle.seccionIII}</p>
+                    <p>${data.detalle.seccionIV}</p>
+                    <button onclick="goHome()" style="margin-top:1rem;">Volver al inicio</button>
+                </div>
+            `;
+            document.getElementById('form-guia-i').querySelectorAll('input').forEach(el => el.disabled = true);
+            document.getElementById('form-guia-i').querySelector('button[type="submit"]').disabled = true;
+        } else {
+            document.getElementById('mensaje-guia-i').innerHTML = `
+                <div style="margin-top:1rem; padding:0.5rem; background:rgba(0,255,0,0.1); border-radius:8px;">
+<p class="mensaje-estado" style="color:#90EE90;">
+    <span class="icono-check"></span>
+    No requiere canalización. Cargando cuestionario principal...
+</p>
+                </div>
+            `;
+            setTimeout(() => cargarGuiaIII(idEvaluacion), 1500);
+        }
+    } catch (err) {
+        alert('❌ ' + err.message);
+    }
+}
+
+async function cargarGuiaIII(idEvaluacion) {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`/api/evaluacion/${idEvaluacion}/preguntas`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const preguntas = await res.json();
+        if (!res.ok) throw new Error('Error al cargar preguntas');
+
+        mostrarGuiaIII(idEvaluacion, preguntas);
+    } catch (err) {
+        alert('❌ ' + err.message);
+    }
+}
+
+function mostrarGuiaIII(idEvaluacion, preguntas) {
+    formContainer.innerHTML = `
+        <button type="button" class="back-btn" id="back-btn-guia-iii">← Atrás</button>
+        <div style="color:white; padding:1rem;">
+            <h2 class="form-title" style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+    <span class="icono-file-text"></span>
+    Guía de Referencia III
+</h2>
+            <p>Se cargarán ${preguntas.length} preguntas agrupadas por categoría y dominio.</p>
+            <p style="margin-top:1rem; font-size:0.9rem; opacity:0.7;">(Próximamente: visualización completa del cuestionario)</p>
+            <button onclick="finalizarEvaluacion(${idEvaluacion})" style="margin-top:1.5rem;">Finalizar evaluación</button>
+        </div>
+    `;
+    document.getElementById('back-btn-guia-iii').addEventListener('click', goBack);
+    formContainer.classList.remove('hidden');
+}
+
+async function finalizarEvaluacion(idEvaluacion) {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`/api/evaluacion/${idEvaluacion}/finalizar`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al finalizar');
+        alert('✅ Evaluación finalizada. Los resultados estarán disponibles pronto.');
+        goHome();
+    } catch (err) {
+        alert('❌ ' + err.message);
+    }
+}
+
+async function continuarEvaluacion() {
+    const token = localStorage.getItem('token');
+    try {
+        formContainer.innerHTML = `
+            <button type="button" class="back-btn" id="back-btn-continuar">← Atrás</button>
+            <div style="color:white; padding:1rem; text-align:center;">
+                <h2 class="form-title" style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+    <span class="icono-continuar"></span>
+    Continuar evaluación
+</h2>
+                <p>Próximamente: lista de evaluaciones guardadas.</p>
+            </div>
+        `;
+        document.getElementById('back-btn-continuar').addEventListener('click', goBack);
+        formContainer.classList.remove('hidden');
+        reportContainer.classList.add('hidden');
+    } catch (err) {
+        alert('❌ ' + err.message);
+    }
 }
 
 // ---------- FUNCIONES AUXILIARES ----------
@@ -334,19 +574,18 @@ async function eliminarUsuario(id) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al eliminar');
-        alert('✅ Usuario eliminado');
+        alert(' Usuario eliminado');
         mostrarGestionUsuarios();
     } catch (err) {
         alert('❌ ' + err.message);
     }
 }
 
-// ---------- RESTABLECER CONTRASEÑA (generar aleatoria y mostrar) ----------
+// ---------- RESTABLECER CONTRASEÑA ----------
 async function resetPassword(id) {
     const token = localStorage.getItem('token');
 
     try {
-        // Solicitar nueva contraseña al backend
         const res = await fetch(`/api/usuarios/${id}/reset-password`, {
             method: 'PUT',
             headers: {
@@ -360,7 +599,6 @@ async function resetPassword(id) {
             throw new Error(data.error || 'Error al restablecer contraseña');
         }
 
-        // Mostrar modal con la nueva contraseña
         mostrarModalContraseña(data.nueva_contraseña);
     } catch (err) {
         alert('❌ ' + err.message);
@@ -368,7 +606,6 @@ async function resetPassword(id) {
 }
 
 function mostrarModalContraseña(contraseña) {
-    // Eliminar modal anterior si existe
     const modalExistente = document.getElementById('modal-contraseña');
     if (modalExistente) modalExistente.remove();
 
@@ -395,24 +632,24 @@ function mostrarModalContraseña(contraseña) {
             text-align: center;
             color: #fff;
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-<h2 style="display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:0;">
-    <span class="icono-llave"></span>
-    Nueva contraseña
-</h2>
+            <h2 style="display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:0;">
+                <span class="icono-llave"></span>
+                Nueva contraseña
+            </h2>
             <p style="font-size: 1.8rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 0.8rem; border-radius: 12px; margin: 1rem 0; letter-spacing: 2px;">
                 ${contraseña}
             </p>
-<button id="copiar-contraseña" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 30px; color: #fff; padding: 0.6rem 1.5rem; cursor: pointer; margin-right: 0.5rem; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;">
-    <span class="icono-clipboard"></span>
-    Copiar
-</button>
+            <button id="copiar-contraseña" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 30px; color: #fff; padding: 0.6rem 1.5rem; cursor: pointer; margin-right: 0.5rem; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                <span class="icono-clipboard"></span>
+                Copiar
+            </button>
             <button id="cerrar-modal" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 30px; color: #fff; padding: 0.6rem 1.5rem; cursor: pointer; transition: 0.3s;">
                 Cerrar
             </button>
-<p style="font-size: 0.8rem; opacity: 0.7; margin-top: 1rem; display:flex; align-items:center; justify-content:center; gap:0.3rem;">
-    <span class="icono-advertencia" style="width: 1.2rem; height: 1.2rem;"></span>
-     Esta contraseña se muestra una sola vez. Entrégala al usuario.
-</p>
+            <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 1rem; display:flex; align-items:center; justify-content:center; gap:0.3rem;">
+                <span class="icono-advertencia" style="width: 1.2rem; height: 1.2rem;"></span>
+                Esta contraseña se muestra una sola vez. Entrégala al usuario.
+            </p>
         </div>
     `;
     document.body.appendChild(modal);
@@ -422,7 +659,6 @@ function mostrarModalContraseña(contraseña) {
         navigator.clipboard?.writeText(contraseña).then(() => {
             alert('✅ Contraseña copiada al portapapeles');
         }).catch(() => {
-            // Fallback: seleccionar y copiar manualmente
             const range = document.createRange();
             const texto = modal.querySelector('p[style*="font-size: 1.8rem"]');
             range.selectNode(texto);
@@ -433,19 +669,21 @@ function mostrarModalContraseña(contraseña) {
         });
     });
 
-    // Cerrar al hacer clic fuera del modal
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.remove();
     });
 }
 
-// ---------- FORMULARIO DE EDICIÓN (ACTUALIZA TODOS LOS CAMPOS) ----------
+// ---------- FORMULARIO DE EDICIÓN ----------
 function mostrarFormularioEdicion(id, nombre, email, rol) {
     const token = localStorage.getItem('token');
     reportContainer.innerHTML = `
         <button type="button" class="back-btn" id="back-btn-editar">← Atrás</button>
         <div style="color:white; padding:1rem;">
-            <h2 class="form-title">✏️ Editar usuario</h2>
+            <h2 class="form-title" style="display:flex; align-items:center; gap:0.5rem;">
+                <span class="icono-editar-titulo"></span>
+                Editar usuario
+            </h2>
             <form id="form-editar-usuario">
                 <label>Nombre completo</label>
                 <input type="text" id="edit-nombre" value="${nombre}" required>
@@ -482,7 +720,9 @@ function mostrarFormularioEdicion(id, nombre, email, rol) {
         const id_rol = parseInt(document.getElementById('edit-rol').value);
 
         const mensajeDiv = document.getElementById('mensaje-edicion');
-        mensajeDiv.innerHTML = '<p style="color:white;"> actualizando usuario...</p>';
+        mensajeDiv.innerHTML = `<p class="mensaje-estado" style="color:#facf29;">
+        <span class="icono-loader-amarillo"></span> Actualizando usuario...
+    </p>`;
 
         try {
             const res = await fetch(`/api/usuarios/${id}`, {
@@ -499,7 +739,12 @@ function mostrarFormularioEdicion(id, nombre, email, rol) {
                 throw new Error(data.error || 'Error al actualizar usuario');
             }
 
-            mensajeDiv.innerHTML = `<p style="color:#90EE90;"> usuario actualizado correctamente.</p>`;
+            mensajeDiv.innerHTML = `
+            <p class="mensaje-estado" style="color:#facf29;">
+                <span class="icono-check-amarillo"></span>
+                Usuario actualizado correctamente.
+            </p>
+        `;
             setTimeout(() => mostrarGestionUsuarios(), 1500);
         } catch (err) {
             mensajeDiv.innerHTML = `<p style="color:#FF6B6B;">❌ ${err.message}</p>`;
