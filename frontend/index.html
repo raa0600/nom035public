@@ -19,7 +19,6 @@
     <div id="auth-screen" class="main-container">
         <div class="logo">
             <img src="img/logo_lagacela_iso.svg" alt="NOM-035" class="logo-img">
-            <!--<img src="img/logo_lagacela.png" alt="NOM-035" class="logo-img">-->
         </div>
         <form id="auth-form">
             <input type="email" id="auth-email" placeholder="usuario" required>
@@ -58,6 +57,11 @@
                     <div class="card-icon"></div>
                     <div class="card-title">Ver reportes</div>
                 </div>
+                <!-- Nueva tarjeta: Canalizaciones (solo admin) -->
+                <div class="card" data-type="canalizacion">
+                    <div class="card-icon"></div>
+                    <div class="card-title">Canalizaciones</div>
+                </div>
                 <!-- Nueva tarjeta: Gestión de usuarios (solo admin) -->
                 <div class="card" data-type="usuarios">
                     <div class="card-icon"></div>
@@ -70,7 +74,6 @@
         <div id="report-container" class="hidden"></div>
     </div>
 
-    <!-- Script externo -->
     <script src="script.js"></script>
 </body>
 

@@ -82,25 +82,16 @@ const update = async (id_usuario, fields) => {
 
     // Construir dinámicamente la parte SET de la consulta
     const setClauses = [];
-    const inputs = [];
-    let paramIndex = 0;
+    const paramNames = [];
 
-    // Mapeo de nombres de campo SQL -> nombre de parámetro
-    const fieldMap = {
-        nombre: { sqlType: sql.NVarChar, paramName: `nombre${paramIndex}` },
-        email: { sqlType: sql.NVarChar, paramName: `email${paramIndex}` },
-        contraseña_hash: { sqlType: sql.NVarChar, paramName: `password${paramIndex}` },
-        id_rol: { sqlType: sql.Int, paramName: `rol${paramIndex}` }
-    };
+    // Mapeo de campos permitidos
+    const allowedFields = ['nombre', 'email', 'departamento', 'contraseña_hash', 'id_rol'];
 
-    // Recorrer los campos proporcionados
     for (const [key, value] of Object.entries(fields)) {
-        if (value !== undefined && value !== null) {
-            const sqlField = key;
-            const paramName = `@p${paramIndex}`;
-            setClauses.push(`${sqlField} = ${paramName}`);
-            inputs.push({ name: `p${paramIndex}`, type: sql.NVarChar, value }); // usamos NVarChar genérico, pero lo ajustamos
-            paramIndex++;
+        if (allowedFields.includes(key) && value !== undefined && value !== null) {
+            const paramName = `p${setClauses.length}`;
+            setClauses.push(`${key} = @${paramName}`);
+            paramNames.push({ name: paramName, value, type: key === 'id_rol' ? sql.Int : sql.NVarChar });
         }
     }
 
@@ -110,8 +101,8 @@ const update = async (id_usuario, fields) => {
 
     const query = `UPDATE USUARIO SET ${setClauses.join(', ')} WHERE id_usuario = @id`;
     const request = pool.request();
-    inputs.forEach(({ name, value }) => {
-        request.input(name, value);
+    paramNames.forEach(({ name, value, type }) => {
+        request.input(name, type, value);
     });
     request.input('id', sql.Int, id_usuario);
 

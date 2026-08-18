@@ -8,7 +8,6 @@ const { getPool, sql } = require('../config/database');
 // GUÍA DE REFERENCIA I
 // ============================================================
 
-// Obtener preguntas de la Guía I
 const getPreguntasGuiaI = async (req, res, next) => {
     try {
         const preguntas = await guiaIModel.getPreguntas();
@@ -18,7 +17,6 @@ const getPreguntasGuiaI = async (req, res, next) => {
     }
 };
 
-// Guardar respuestas de la Guía I
 const guardarGuiaI = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -46,7 +44,6 @@ const guardarGuiaI = async (req, res, next) => {
     }
 };
 
-// Evaluar Guía I (lógica de canalización)
 const evaluarGuiaI = async (id_evaluacion) => {
     const respuestas = await guiaIModel.getRespuestas(id_evaluacion);
     const respMap = {};
@@ -78,13 +75,11 @@ const evaluarGuiaI = async (id_evaluacion) => {
 // GUÍA DE REFERENCIA III (Cuestionario principal)
 // ============================================================
 
-// Iniciar evaluación
 const iniciarEvaluacion = async (req, res, next) => {
     try {
         const pool = getPool();
         const userId = req.user.id;
 
-        // 1. Obtener el usuario con su id_empleado
         const userResult = await pool.request()
             .input('id', sql.Int, userId)
             .query('SELECT id_usuario, email, nombre, id_empleado FROM USUARIO WHERE id_usuario = @id');
@@ -96,9 +91,7 @@ const iniciarEvaluacion = async (req, res, next) => {
         let user = userResult.recordset[0];
         let id_empleado = user.id_empleado;
 
-        // 2. Si no tiene empleado, crearlo
         if (!id_empleado) {
-            // Buscar si ya existe empleado con ese email
             const empleadoExistente = await pool.request()
                 .input('email', sql.NVarChar, user.email)
                 .query('SELECT id_empleado FROM EMPLEADO WHERE email = @email');
@@ -106,7 +99,6 @@ const iniciarEvaluacion = async (req, res, next) => {
             if (empleadoExistente.recordset.length > 0) {
                 id_empleado = empleadoExistente.recordset[0].id_empleado;
             } else {
-                // Crear nuevo empleado
                 const resultEmpleado = await pool.request()
                     .input('nombre', sql.NVarChar, user.nombre)
                     .input('email', sql.NVarChar, user.email)
@@ -118,14 +110,12 @@ const iniciarEvaluacion = async (req, res, next) => {
                 id_empleado = resultEmpleado.recordset[0].id;
             }
 
-            // Vincular usuario con empleado
             await pool.request()
                 .input('id_usuario', sql.Int, userId)
                 .input('id_empleado', sql.Int, id_empleado)
                 .query('UPDATE USUARIO SET id_empleado = @id_empleado WHERE id_usuario = @id_usuario');
         }
 
-        // 3. Crear la evaluación
         const id_evaluacion = await evaluacionModel.create(id_empleado);
         res.status(201).json({ id_evaluacion, message: 'Evaluación iniciada' });
 
@@ -134,7 +124,6 @@ const iniciarEvaluacion = async (req, res, next) => {
     }
 };
 
-// Obtener preguntas de una evaluación
 const getPreguntas = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -145,7 +134,6 @@ const getPreguntas = async (req, res, next) => {
     }
 };
 
-// Guardar respuesta de una pregunta
 const guardarRespuesta = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -160,20 +148,243 @@ const guardarRespuesta = async (req, res, next) => {
     }
 };
 
-// Finalizar evaluación y calcular resultados
+// ============================================================
+// FUNCIONES AUXILIARES PARA CLASIFICACIÓN
+// ============================================================
+function clasificarGlobal(puntaje) {
+    if (puntaje < 50) return 'Nulo';
+    if (puntaje < 75) return 'Bajo';
+    if (puntaje < 99) return 'Medio';
+    if (puntaje < 140) return 'Alto';
+    return 'Muy Alto';
+}
+
+function clasificarCategoria(id_categoria, puntaje) {
+    const umbrales = {
+        1: [5, 9, 11, 14],      // Ambiente de trabajo
+        2: [15, 30, 45, 60],    // Factores propios de la actividad
+        3: [5, 7, 10, 13],      // Organización del tiempo de trabajo
+        4: [14, 29, 42, 58],    // Liderazgo y relaciones en el trabajo
+        5: [10, 14, 18, 23]     // Entorno organizacional
+    };
+    const u = umbrales[id_categoria];
+    if (!u) return 'Nulo';
+    if (puntaje < u[0]) return 'Nulo';
+    if (puntaje < u[1]) return 'Bajo';
+    if (puntaje < u[2]) return 'Medio';
+    if (puntaje < u[3]) return 'Alto';
+    return 'Muy Alto';
+}
+
+function clasificarDominio(id_dominio, puntaje) {
+    const umbrales = {
+        1: [5, 9, 11, 14],      // Condiciones en el ambiente de trabajo
+        2: [15, 21, 27, 37],    // Carga de trabajo
+        3: [11, 16, 21, 25],    // Falta de control sobre el trabajo
+        4: [1, 2, 4, 6],        // Jornada de trabajo
+        5: [4, 6, 8, 10],       // Interferencia en la relación trabajo-familia
+        6: [9, 12, 16, 20],     // Liderazgo
+        7: [10, 13, 17, 21],    // Relaciones en el trabajo
+        8: [7, 10, 13, 16],     // Violencia
+        9: [6, 10, 14, 18],     // Reconocimiento del desempeño
+        10: [4, 6, 8, 10]       // Insuficiente sentido de pertenencia e inestabilidad
+    };
+    const u = umbrales[id_dominio];
+    if (!u) return 'Nulo';
+    if (puntaje < u[0]) return 'Nulo';
+    if (puntaje < u[1]) return 'Bajo';
+    if (puntaje < u[2]) return 'Medio';
+    if (puntaje < u[3]) return 'Alto';
+    return 'Muy Alto';
+}
+
+// ============================================================
+// FINALIZAR EVALUACIÓN Y CALCULAR RESULTADOS
+// ============================================================
 const finalizarEvaluacion = async (req, res, next) => {
     try {
         const { id } = req.params;
-        // Aquí implementaremos la lógica de cálculo más adelante
-        // Por ahora solo cambiamos el estado
+        const pool = getPool();
+
+        const respuestas = await respuestaModel.getRespuestasByEvaluacion(id);
+        if (respuestas.length === 0) {
+            return res.status(400).json({ error: 'No hay respuestas guardadas para esta evaluación.' });
+        }
+
+        const preguntas = await evaluacionModel.getPreguntasByEvaluacion(id);
+        const preguntasMap = {};
+        preguntas.forEach(p => {
+            preguntasMap[p.id_pregunta] = p;
+        });
+
+        const respuestasMap = {};
+        respuestas.forEach(r => {
+            respuestasMap[r.id_pregunta] = r.valor_escogido;
+        });
+
+        const catPuntajes = {};
+        const domPuntajes = {};
+        let totalBruto = 0;
+        let totalMaximo = 0;
+
+        for (const [id_pregunta, valor] of Object.entries(respuestasMap)) {
+            const pregunta = preguntasMap[id_pregunta];
+            if (!pregunta) continue;
+
+            const tipo = pregunta.tipo_puntaje.toLowerCase();
+            let puntaje = valor;
+            if (tipo === 'inversa' || tipo === '0') {
+                puntaje = 4 - valor;
+            } else if (tipo === 'directa' || tipo === '1') {
+                puntaje = valor;
+            } else {
+                puntaje = valor;
+            }
+
+            if (domPuntajes[pregunta.id_dominio]) {
+                domPuntajes[pregunta.id_dominio].bruto += puntaje;
+                domPuntajes[pregunta.id_dominio].maximo += 4;
+            } else {
+                domPuntajes[pregunta.id_dominio] = { bruto: puntaje, maximo: 4 };
+            }
+
+            if (catPuntajes[pregunta.id_categoria]) {
+                catPuntajes[pregunta.id_categoria].bruto += puntaje;
+                catPuntajes[pregunta.id_categoria].maximo += 4;
+            } else {
+                catPuntajes[pregunta.id_categoria] = { bruto: puntaje, maximo: 4 };
+            }
+
+            totalBruto += puntaje;
+            totalMaximo += 4;
+        }
+
+        const globalNivel = clasificarGlobal(totalBruto);
+        const globalPorcentaje = totalMaximo > 0 ? (totalBruto / totalMaximo) * 100 : 0;
+
+        await evaluacionModel.insertResultadoGlobal(id, totalBruto, totalMaximo, globalPorcentaje, globalNivel);
+
+        for (const [id_cat, datos] of Object.entries(catPuntajes)) {
+            const nivel = clasificarCategoria(parseInt(id_cat), datos.bruto);
+            const porcentaje = datos.maximo > 0 ? (datos.bruto / datos.maximo) * 100 : 0;
+            await evaluacionModel.insertResultadoCategoria(id, parseInt(id_cat), datos.bruto, datos.maximo, porcentaje, nivel);
+        }
+
+        for (const [id_dom, datos] of Object.entries(domPuntajes)) {
+            const nivel = clasificarDominio(parseInt(id_dom), datos.bruto);
+            const porcentaje = datos.maximo > 0 ? (datos.bruto / datos.maximo) * 100 : 0;
+            await evaluacionModel.insertResultadoDominio(id, parseInt(id_dom), datos.bruto, datos.maximo, porcentaje, nivel);
+        }
+
         await evaluacionModel.updateStatus(id, 'Completada');
-        res.json({ message: 'Evaluación finalizada. Próximamente los resultados.' });
+
+        res.json({
+            message: 'Evaluación finalizada y resultados calculados.',
+            resultado: {
+                global: { puntaje: totalBruto, maximo: totalMaximo, porcentaje: globalPorcentaje, nivel: globalNivel },
+                categorias: Object.keys(catPuntajes).map(id => ({ id_categoria: id, nivel: clasificarCategoria(parseInt(id), catPuntajes[id].bruto) })),
+                dominios: Object.keys(domPuntajes).map(id => ({ id_dominio: id, nivel: clasificarDominio(parseInt(id), domPuntajes[id].bruto) }))
+            }
+        });
     } catch (err) {
         next(err);
     }
 };
 
-// Obtener resultados de una evaluación
+// ============================================================
+// FUNCIONES PARA PAUSA Y CONTINUACIÓN
+// ============================================================
+
+const getEvaluacionesEnCurso = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const pool = getPool();
+        const userResult = await pool.request()
+            .input('id', sql.Int, userId)
+            .query('SELECT id_empleado FROM USUARIO WHERE id_usuario = @id');
+
+        if (!userResult.recordset[0]?.id_empleado) {
+            return res.json([]);
+        }
+        const id_empleado = userResult.recordset[0].id_empleado;
+        const evaluaciones = await evaluacionModel.getEvaluacionesByEmpleado(id_empleado);
+        // Solo evaluaciones en curso de Guía III (Guía I ya completada)
+        const enCurso = evaluaciones.filter(e => e.estatus === 'En_proceso');
+        res.json(enCurso);
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getProgresoEvaluacion = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const respuestas = await respuestaModel.getRespuestasByEvaluacion(id);
+        const preguntas = await evaluacionModel.getPreguntasByEvaluacion(id);
+        res.json({ respuestas, preguntas });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const pausarEvaluacion = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        await evaluacionModel.updateStatus(id, 'En_proceso');
+        res.json({ message: 'Evaluación pausada correctamente.' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ============================================================
+// ESTADO ACTUAL PARA INICIAR EVALUACIÓN
+// ============================================================
+const getEstadoActual = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const pool = getPool();
+        const userResult = await pool.request()
+            .input('id', sql.Int, userId)
+            .query('SELECT id_empleado FROM USUARIO WHERE id_usuario = @id');
+        const id_empleado = userResult.recordset[0]?.id_empleado;
+        if (!id_empleado) {
+            return res.json(null);
+        }
+        const evalResult = await pool.request()
+            .input('id_empleado', sql.Int, id_empleado)
+            .query(`
+                SELECT TOP 1 id_evaluacion, estatus, fecha_aplicacion
+                FROM EVALUACION
+                WHERE id_empleado = @id_empleado AND estatus IN ('En_proceso', 'Canalizacion_requerida')
+                ORDER BY fecha_aplicacion DESC
+            `);
+        res.json(evalResult.recordset[0] || null);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ============================================================
+// REPORTES
+// ============================================================
+
+const getEvaluacionesCompletadas = async (req, res, next) => {
+    try {
+        const pool = getPool();
+        const result = await pool.request().query(`
+            SELECT e.id_evaluacion, emp.nombre, emp.departamento_seccion_area, e.fecha_aplicacion, e.estatus
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            WHERE e.estatus = 'Completada'
+            ORDER BY e.fecha_aplicacion DESC
+        `);
+        res.json(result.recordset);
+    } catch (err) {
+        next(err);
+    }
+};
+
 const getResultados = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -197,6 +408,66 @@ const getResultados = async (req, res, next) => {
     }
 };
 
+// ============================================================
+// CANALIZACIONES
+// ============================================================
+const getCanalizaciones = async (req, res, next) => {
+    try {
+        const pool = getPool();
+        const result = await pool.request()
+            .query(`
+                SELECT 
+                    e.id_evaluacion,
+                    u.id_usuario,
+                    emp.id_empleado,
+                    emp.nombre AS empleado_nombre,
+                    emp.email AS empleado_email,
+                    emp.departamento_seccion_area,
+                    e.fecha_aplicacion,
+                    e.estatus
+                FROM EVALUACION e
+                JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+                JOIN USUARIO u ON u.id_empleado = emp.id_empleado
+                WHERE e.estatus = 'Canalizacion_requerida'
+                ORDER BY e.fecha_aplicacion DESC
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        next(err);
+    }
+};
+
+const deleteEvaluacion = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const pool = getPool();
+
+        const evalResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query('SELECT estatus FROM EVALUACION WHERE id_evaluacion = @id');
+
+        if (evalResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Evaluación no encontrada' });
+        }
+
+        const estatus = evalResult.recordset[0].estatus;
+        if (estatus !== 'Canalizacion_requerida') {
+            return res.status(400).json({ error: 'Solo se pueden eliminar evaluaciones en estado de canalización' });
+        }
+
+        await pool.request().input('id', sql.Int, id).query('DELETE FROM RESPUESTA_GUIA_I WHERE id_evaluacion = @id');
+        await pool.request().input('id', sql.Int, id).query('DELETE FROM RESPUESTA WHERE id_evaluacion = @id');
+        await pool.request().input('id', sql.Int, id).query('DELETE FROM RESULTADO_GLOBAL WHERE id_evaluacion = @id');
+        await pool.request().input('id', sql.Int, id).query('DELETE FROM RESULTADO_CATEGORIA WHERE id_evaluacion = @id');
+        await pool.request().input('id', sql.Int, id).query('DELETE FROM RESULTADO_DOMINIO WHERE id_evaluacion = @id');
+        await pool.request().input('id', sql.Int, id).query('DELETE FROM EVALUACION WHERE id_evaluacion = @id');
+
+        res.json({ message: 'Canalización eliminada correctamente' });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getPreguntasGuiaI,
     guardarGuiaI,
@@ -205,5 +476,12 @@ module.exports = {
     getPreguntas,
     guardarRespuesta,
     finalizarEvaluacion,
-    getResultados
+    getResultados,
+    getCanalizaciones,
+    deleteEvaluacion,
+    getEvaluacionesEnCurso,
+    getProgresoEvaluacion,
+    pausarEvaluacion,
+    getEvaluacionesCompletadas,
+    getEstadoActual
 };

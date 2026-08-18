@@ -111,7 +111,8 @@ const updateRol = async (req, res, next) => {
     }
 };
 
-// ---------- ELIMINAR USUARIO ----------
+// ---------- ELIMINAR USUARIO (con eliminación manual en cascada) ----------
+// ---------- ELIMINAR USUARIO (con eliminación manual en cascada) ----------
 const deleteUsuario = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -125,24 +126,82 @@ const deleteUsuario = async (req, res, next) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Eliminar también el empleado asociado (opcional)
         const pool = getPool();
-        await pool.request()
-            .input('id_usuario', sql.Int, id)
-            .query('DELETE FROM USUARIO WHERE id_usuario = @id_usuario');
-        // Si quieres eliminar el empleado, puedes hacerlo con una consulta adicional
 
-        res.json({ message: 'Usuario eliminado correctamente' });
+        // 1. Obtener id_empleado del usuario
+        const empleadoResult = await pool.request()
+            .input('id_usuario', sql.Int, id)
+            .query('SELECT id_empleado FROM USUARIO WHERE id_usuario = @id_usuario');
+        
+        const id_empleado = empleadoResult.recordset[0]?.id_empleado;
+
+        // 2. Eliminar el usuario (rompe la FK con EMPLEADO)
+        await usuarioModel.remove(parseInt(id));
+
+        // 3. Si el usuario tenía empleado, eliminar sus datos
+        if (id_empleado) {
+            // Eliminar respuestas de Guía I
+            await pool.request()
+                .input('id_empleado', sql.Int, id_empleado)
+                .query(`
+                    DELETE FROM RESPUESTA_GUIA_I 
+                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
+                `);
+
+            // Eliminar respuestas de Guía III
+            await pool.request()
+                .input('id_empleado', sql.Int, id_empleado)
+                .query(`
+                    DELETE FROM RESPUESTA 
+                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
+                `);
+
+            // Eliminar resultados globales
+            await pool.request()
+                .input('id_empleado', sql.Int, id_empleado)
+                .query(`
+                    DELETE FROM RESULTADO_GLOBAL 
+                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
+                `);
+
+            // Eliminar resultados por categoría
+            await pool.request()
+                .input('id_empleado', sql.Int, id_empleado)
+                .query(`
+                    DELETE FROM RESULTADO_CATEGORIA 
+                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
+                `);
+
+            // Eliminar resultados por dominio
+            await pool.request()
+                .input('id_empleado', sql.Int, id_empleado)
+                .query(`
+                    DELETE FROM RESULTADO_DOMINIO 
+                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
+                `);
+
+            // Eliminar evaluaciones
+            await pool.request()
+                .input('id_empleado', sql.Int, id_empleado)
+                .query('DELETE FROM EVALUACION WHERE id_empleado = @id_empleado');
+
+            // Eliminar empleado
+            await pool.request()
+                .input('id_empleado', sql.Int, id_empleado)
+                .query('DELETE FROM EMPLEADO WHERE id_empleado = @id_empleado');
+        }
+
+        res.json({ message: 'Usuario y todos sus datos eliminados correctamente' });
     } catch (err) {
         next(err);
     }
 };
 
-// ---------- ACTUALIZAR USUARIO COMPLETO ----------
+// ---------- ACTUALIZAR USUARIO COMPLETO (incluye departamento) ----------
 const updateUsuario = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { nombre, email, password, id_rol } = req.body;
+        const { nombre, email, password, departamento, id_rol } = req.body;
 
         const user = await usuarioModel.findById(parseInt(id));
         if (!user) {
@@ -152,6 +211,7 @@ const updateUsuario = async (req, res, next) => {
         const updateData = {
             nombre: nombre || user.nombre,
             email: email || user.email,
+            departamento: departamento !== undefined ? departamento : user.departamento,
             id_rol: id_rol !== undefined ? id_rol : user.id_rol
         };
 

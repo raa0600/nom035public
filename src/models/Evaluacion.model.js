@@ -60,4 +60,70 @@ const getPreguntasByEvaluacion = async (id_evaluacion) => {
     return result.recordset;
 };
 
-module.exports = { create, findById, updateStatus, getPreguntasByEvaluacion };
+const getEvaluacionesByEmpleado = async (id_empleado) => {
+    const pool = getPool();
+    const result = await pool.request()
+        .input('id_empleado', sql.Int, id_empleado)
+        .query(`
+            SELECT id_evaluacion, fecha_aplicacion, estatus, requiere_canalizacion
+            FROM EVALUACION
+            WHERE id_empleado = @id_empleado
+            ORDER BY fecha_aplicacion DESC
+        `);
+    return result.recordset;
+};
+
+const insertResultadoGlobal = async (id_evaluacion, puntaje_bruto, puntaje_maximo, porcentaje, resultado_final) => {
+    const pool = getPool();
+    await pool.request()
+        .input('id_eval', sql.Int, id_evaluacion)
+        .input('bruto', sql.Int, puntaje_bruto)
+        .input('max', sql.Int, puntaje_maximo)
+        .input('porc', sql.Decimal(5, 2), porcentaje)
+        .input('final', sql.NVarChar(30), resultado_final)
+        .query(`
+            INSERT INTO RESULTADO_GLOBAL (id_evaluacion, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, resultado_final)
+            VALUES (@id_eval, @bruto, @max, @porc, @final)
+        `);
+};
+
+const insertResultadoCategoria = async (id_evaluacion, id_categoria, puntaje_bruto, puntaje_maximo, porcentaje, nivel_riesgo) => {
+    const pool = getPool();
+    await pool.request()
+        .input('id_eval', sql.Int, id_evaluacion)
+        .input('id_cat', sql.Int, id_categoria)
+        .input('bruto', sql.Int, puntaje_bruto)
+        .input('max', sql.Int, puntaje_maximo)
+        .input('porc', sql.Decimal(5, 2), porcentaje)
+        .input('nivel', sql.NVarChar(20), nivel_riesgo)
+        .query(`
+            INSERT INTO RESULTADO_CATEGORIA (id_evaluacion, id_categoria, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo)
+            VALUES (@id_eval, @id_cat, @bruto, @max, @porc, @nivel)
+        `);
+};
+
+const insertResultadoDominio = async (id_evaluacion, id_dominio, puntaje_bruto, puntaje_maximo, porcentaje, nivel_riesgo) => {
+    const pool = getPool();
+    await pool.request()
+        .input('id_eval', sql.Int, id_evaluacion)
+        .input('id_dom', sql.Int, id_dominio)
+        .input('bruto', sql.Int, puntaje_bruto)
+        .input('max', sql.Int, puntaje_maximo)
+        .input('porc', sql.Decimal(5, 2), porcentaje)
+        .input('nivel', sql.NVarChar(20), nivel_riesgo)
+        .query(`
+            INSERT INTO RESULTADO_DOMINIO (id_evaluacion, id_dominio, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo)
+            VALUES (@id_eval, @id_dom, @bruto, @max, @porc, @nivel)
+        `);
+};
+
+module.exports = {
+    create,
+    findById,
+    updateStatus,
+    getPreguntasByEvaluacion,
+    getEvaluacionesByEmpleado,
+    insertResultadoGlobal,
+    insertResultadoCategoria,
+    insertResultadoDominio
+};
