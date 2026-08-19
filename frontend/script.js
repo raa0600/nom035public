@@ -844,24 +844,24 @@ function mostrarGuiaI(idEvaluacion, secciones) {
 
     let html = `
         <button type="button" class="back-btn" id="back-btn-guia-i">← Atrás</button>
-        <div style="color:white; padding:1rem; max-height:80vh; overflow-y:auto;" class="scroll-guia-i">
-            <h2 class="form-title" style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
-                <span class="icono-file-text"></span>
-                Guía de Referencia I
-            </h2>
-            <p style="margin-bottom:1.5rem; font-size:0.9rem; opacity:0.8; text-align:center;">
-                Responda las siguientes preguntas con <strong>Sí</strong> o <strong>No</strong>.
-            </p>
-            <form id="form-guia-i">
+        <div style="color:white; max-height:80vh; overflow-y:auto; padding:0;" class="scroll-guia-i">
+            <form id="form-guia-i" class="formulario-nom035">
+                <h2 class="form-title" style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                    <span class="icono-file-text"></span>
+                    Guía de Referencia I
+                </h2>
+                <p style="margin-bottom:1.5rem; font-size:0.9rem; opacity:0.8; text-align:center;">
+                    Responda las siguientes preguntas con <strong>Sí</strong> o <strong>No</strong>.
+                </p>
     `;
 
     for (const [seccion, preguntas] of Object.entries(secciones)) {
-        html += `<h3 style="margin-top:1.5rem; margin-bottom:0.5rem; font-size:1.1rem; color:rgba(255,255,255,0.9);">${nombresSecciones[seccion]}</h3>`;
+        html += `<h3 style="margin-top:1.5rem; margin-bottom:0.5rem; font-size:1.1rem; color:rgba(255,255,255,0.9); padding-left:0.5rem;">${nombresSecciones[seccion]}</h3>`;
         preguntas.forEach(p => {
             html += `
-                <div style="margin-bottom:0.8rem; padding:0.5rem; background:rgba(255,255,255,0.05); border-radius:8px;">
+                <div class="pregunta-item">
                     <p style="margin:0 0 0.3rem 0; font-size:0.95rem;">${p.texto}</p>
-                    <div style="display:flex; gap:1rem;">
+                    <div class="opciones-label">
                         <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
                             <input type="radio" name="pregunta_${p.id_pregunta_guia_i}" value="1" required> Sí
                         </label>
@@ -875,7 +875,9 @@ function mostrarGuiaI(idEvaluacion, secciones) {
     }
 
     html += `
-                <button type="submit" style="margin-top:1.5rem;">Enviar respuestas</button>
+                <div class="botones-guia-iii">
+                    <button type="submit" class="btn-holografico">Enviar respuestas</button>
+                </div>
             </form>
         </div>
     `;
@@ -966,23 +968,27 @@ async function cargarGuiaIII(idEvaluacion) {
 
         let html = `
             <button type="button" class="back-btn" id="back-btn-guia-iii">← Atrás</button>
-            <div style="color:white; padding:1rem; max-height:80vh; overflow-y:auto;" class="scroll-guia-i">
-                <h2 class="form-title">Guía de Referencia III</h2>
-                <p style="margin-bottom:1rem;">Seleccione una opción para cada pregunta. Las preguntas condicionales aparecerán según sus respuestas.</p>
-                <form id="form-guia-iii">
+            <div style="color:white; max-height:80vh; overflow-y:auto; padding:0;" class="scroll-guia-i">
+                <form id="form-guia-iii" class="formulario-nom035">
+                    <h2 class="form-title">Guía de Referencia III</h2>
+                    <p style="margin-bottom:1rem;">Seleccione una opción para cada pregunta. Las preguntas condicionales aparecerán según sus respuestas.</p>
         `;
 
         // Preguntas de control (filtros)
         html += `
-            <div style="margin:1rem 0; padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px;">
+            <div class="pregunta-item">
                 <p style="margin:0 0 0.5rem 0; font-weight:bold;">¿En su trabajo debe brindar servicio a clientes o usuarios?</p>
-                <label><input type="radio" name="filtro_clientes" value="1" onchange="toggleCondicional('clientes', true)"> Sí</label>
-                <label><input type="radio" name="filtro_clientes" value="0" onchange="toggleCondicional('clientes', false)" checked> No</label>
+                <div class="opciones-label">
+                    <label><input type="radio" name="filtro_clientes" value="1" onchange="toggleCondicional('clientes', true)"> Sí</label>
+                    <label><input type="radio" name="filtro_clientes" value="0" onchange="toggleCondicional('clientes', false)" checked> No</label>
+                </div>
             </div>
-            <div style="margin:1rem 0; padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px;">
+            <div class="pregunta-item">
                 <p style="margin:0 0 0.5rem 0; font-weight:bold;">¿Es usted jefe de otros trabajadores?</p>
-                <label><input type="radio" name="filtro_jefe" value="1" onchange="toggleCondicional('jefe', true)"> Sí</label>
-                <label><input type="radio" name="filtro_jefe" value="0" onchange="toggleCondicional('jefe', false)" checked> No</label>
+                <div class="opciones-label">
+                    <label><input type="radio" name="filtro_jefe" value="1" onchange="toggleCondicional('jefe', true)"> Sí</label>
+                    <label><input type="radio" name="filtro_jefe" value="0" onchange="toggleCondicional('jefe', false)" checked> No</label>
+                </div>
             </div>
         `;
 
@@ -1000,9 +1006,9 @@ async function cargarGuiaIII(idEvaluacion) {
 
                         const valorActual = respuestasMap[pregunta.id_pregunta] !== undefined ? respuestasMap[pregunta.id_pregunta] : -1;
                         html += `
-                            <div class="pregunta-item ${condicional}" data-id-pregunta="${pregunta.id_pregunta}" style="margin-bottom:0.8rem; padding:0.5rem; background:rgba(255,255,255,0.05); border-radius:8px; ${condicional ? 'display:none;' : ''}">
+                            <div class="pregunta-item ${condicional}" data-id-pregunta="${pregunta.id_pregunta}" style="${condicional ? 'display:none;' : ''}">
                                 <p style="margin:0 0 0.3rem 0; font-size:0.95rem;">${pregunta.numero}. ${pregunta.texto}</p>
-                                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                                <div class="opciones-label">
                                     ${['Siempre','Casi siempre','Algunas veces','Casi nunca','Nunca'].map((opcion, idx) => `
                                         <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
                                             <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${idx}" ${valorActual === idx ? 'checked' : ''}>
@@ -1018,11 +1024,11 @@ async function cargarGuiaIII(idEvaluacion) {
         }
 
         html += `
-                <div class="botones-guia-iii">
-                    <button type="button" id="btn-guardar-salir" class="btn-holografico-secundario">Guardar y salir</button>
-                    <button type="submit" class="btn-holografico">Finalizar evaluación</button>
-                </div>
-            </form>
+                    <div class="botones-guia-iii">
+                        <button type="button" id="btn-guardar-salir" class="btn-holografico-secundario">Guardar y salir</button>
+                        <button type="submit" class="btn-holografico">Finalizar evaluación</button>
+                    </div>
+                </form>
             </div>
         `;
 
@@ -1230,6 +1236,10 @@ async function verResultadoEvaluacion(idEvaluacion) {
                         <p><strong>Puntaje global:</strong> ${data.global.puntaje_bruto} / ${data.global.puntaje_maximo} (${data.global.puntaje_porcentaje}%)</p>
                         <p><strong>Nivel de riesgo:</strong> ${data.global.resultado_final}</p>
                     </div>
+                    <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px; margin-bottom:1.5rem; border-left: 4px solid #facf29;">
+                        <h3 style="margin-top:0; margin-bottom:0.5rem; color:#facf29;">Recomendación</h3>
+                        <p style="margin:0; font-size:0.95rem; line-height:1.5;">${obtenerRecomendacion(data.global.resultado_final)}</p>
+                    </div>
                     <h3>Categorías</h3>
                     <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1rem;">
                         <tr><th>Categoría</th><th>Puntaje</th><th>Nivel</th></tr>
@@ -1253,6 +1263,24 @@ async function verResultadoEvaluacion(idEvaluacion) {
         reportContainer.classList.add('hidden');
     } catch (err) {
         alert('❌ ' + err.message);
+    }
+}
+
+// ---------- RECOMENDACIONES SEGÚN NIVEL ----------
+function obtenerRecomendacion(nivel) {
+    switch (nivel) {
+        case 'Nulo':
+            return 'El riesgo resulta despreciable por lo que no se requieren medidas adicionales.';
+        case 'Bajo':
+            return 'Es necesaria una mayor difusión de la política de prevención de riesgos psicosociales y programas para: la prevención de los factores de riesgo psicosocial, la promoción de un entorno organizacional favorable y la prevención de la violencia laboral.';
+        case 'Medio':
+            return 'Se requiere revisar la política de prevención de riesgos psicosociales y programas para la prevención de los factores de riesgo psicosocial, la promoción de un entorno organizacional favorable y la prevención de la violencia laboral, así como reforzar su aplicación y difusión, mediante un Programa de intervención.';
+        case 'Alto':
+            return 'Se requiere realizar un análisis de cada categoría y dominio, de manera que se puedan determinar las acciones de intervención apropiadas a través de un Programa de intervención, que podrá incluir una evaluación específica y deberá incluir una campaña de sensibilización, revisar la política de prevención de riesgos psicosociales y programas para la prevención de los factores de riesgo psicosocial, la promoción de un entorno organizacional favorable y la prevención de la violencia laboral, así como reforzar su aplicación y difusión.';
+        case 'Muy Alto':
+            return 'Se requiere realizar el análisis de cada categoría y dominio para establecer las acciones de intervención apropiadas, mediante un Programa de intervención que deberá incluir evaluaciones específicas, y contemplar campañas de sensibilización, revisar la política de prevención de riesgos psicosociales y programas para la prevención de los factores de riesgo psicosocial, la promoción de un entorno organizacional favorable y la prevención de la violencia laboral, así como reforzar su aplicación y difusión.';
+        default:
+            return '';
     }
 }
 

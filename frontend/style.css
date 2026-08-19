@@ -465,7 +465,6 @@
     text-shadow: 0 0 10px rgba(250, 207, 41, 0.3);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='2' x2='12' y2='6'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='4.93' y1='4.93' x2='7.76' y2='7.76'/%3E%3Cline x1='16.24' y1='16.24' x2='19.07' y2='19.07'/%3E%3Cline x1='2' y1='12' x2='6' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='19.07' x2='7.76' y2='16.24'/%3E%3Cline x1='16.24' y1='7.76' x2='19.07' y2='4.93'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='2' x2='12' y2='6'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='4.93' y1='4.93' x2='7.76' y2='7.76'/%3E%3Cline x1='16.24' y1='16.24' x2='19.07' y2='19.07'/%3E%3Cline x1='2' y1='12' x2='6' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='19.07' x2='7.76' y2='16.24'/%3E%3Cline x1='16.24' y1='7.76' x2='19.07' y2='4.93'/%3E%3C/svg%3E");
     -webkit-mask-size: contain;
     mask-size: contain;
     -webkit-mask-position: center;
@@ -1242,9 +1241,9 @@
   }
   
   /* =========================================
-     FORMULARIO GUÍA III – Sin desbordamiento horizontal
+     FORMULARIO NOM-035 (Compartido Guía I y III)
      ========================================= */
-  #form-guia-iii {
+  .formulario-nom035 {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -1261,7 +1260,7 @@
     box-sizing: border-box;
   }
   
-  #form-guia-iii .pregunta-item {
+  .formulario-nom035 .pregunta-item {
     padding: 0.75rem;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
@@ -1270,20 +1269,19 @@
     box-sizing: border-box;
   }
   
-  #form-guia-iii .pregunta-item p {
+  .formulario-nom035 .pregunta-item p {
     margin: 0 0 0.3rem 0;
     font-size: 0.95rem;
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
   
-  #form-guia-iii .opciones-label {
+  .formulario-nom035 .opciones-label {
     display: flex;
     flex-wrap: wrap;
     gap: 0.8rem;
   }
   
-  /* Contenedor de botones dentro de Guía III */
   .botones-guia-iii {
     display: flex;
     gap: 1rem;
@@ -1302,9 +1300,8 @@
     margin-top: 0;
   }
   
-  /* Ajuste móvil */
   @media (max-width: 480px) {
-    #form-guia-iii {
+    .formulario-nom035 {
       padding: 1rem;
       margin: 0.5rem auto;
     }
@@ -1318,122 +1315,68 @@
       width: 100%;
     }
   
-    #form-guia-iii .opciones-label {
+    .formulario-nom035 .opciones-label {
       gap: 0.5rem;
     }
   
-    #form-guia-iii .pregunta-item {
+    .formulario-nom035 .pregunta-item {
       padding: 0.5rem;
     }
   }
+  
+/* =========================================
+   RESTAURAR ESTILOS DEL LOGIN (usuario/contraseña)
+   ========================================= */
+   #auth-form {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    padding: 1.8rem !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    box-sizing: border-box !important;
+  }
+  
+  #auth-form input {
+    padding: 10px 14px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    font-size: 1rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+    margin-bottom: 0.9rem !important;
+  }
+  
+  #auth-form input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+  
+  #auth-form input:focus {
+    border-color: #a0c4ff !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+  }
 
   /* =========================================
-   CORRECCIÓN DE ESTILOS PARA CAMPOS DE FORMULARIOS
+   ESPACIADO EN TABLAS DE REPORTES Y RESULTADOS
    ========================================= */
-#auth-form,
-#form-crear-usuario,
-#form-editar-usuario {
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  border-radius: 20px !important;
-  color: #fff !important;
-  padding: 1.8rem !important;
-  box-sizing: border-box;
+#form-container table th,
+#form-container table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-#auth-form input,
-#auth-form input[type="email"],
-#auth-form input[type="password"],
-#form-crear-usuario input,
-#form-crear-usuario input[type="text"],
-#form-crear-usuario input[type="email"],
-#form-crear-usuario input[type="password"],
-#form-crear-usuario select,
-#form-editar-usuario input,
-#form-editar-usuario input[type="text"],
-#form-editar-usuario input[type="email"],
-#form-editar-usuario input[type="password"],
-#form-editar-usuario select {
-  padding: 10px 14px !important;
-  border-radius: 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  font-size: 1rem !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
-  outline: none !important;
-  transition: 0.3s !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  height: auto !important;
-  margin-bottom: 1rem !important;
+#form-container table th {
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
 }
 
-#auth-form input::placeholder,
-#form-crear-usuario input::placeholder,
-#form-editar-usuario input::placeholder {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
 
-#auth-form input:focus,
-#form-crear-usuario input:focus,
-#form-crear-usuario select:focus,
-#form-editar-usuario input:focus,
-#form-editar-usuario select:focus {
-  border-color: #a0c4ff !important;
-  background: rgba(255, 255, 255, 0.25) !important;
-}
-
-/* =========================================
-   CORRECCIÓN DE ESPACIADO Y ALINEACIÓN EN FORMULARIOS
-   ========================================= */
-   #form-crear-usuario,
-   #form-editar-usuario {
-     display: flex;
-     flex-direction: column;
-     gap: 0;
-   }
-   
-   /* Etiquetas */
-   #form-crear-usuario label,
-   #form-editar-usuario label {
-     display: block;
-     text-align: left;
-     width: 100%;
-     max-width: 100%;
-     margin: 0 0 0.5rem 0;      /* espacio debajo del título */
-     font-size: 0.9rem;
-     font-weight: 500;
-     color: rgba(255, 255, 255, 0.9);
-   }
-   
-   /* Campos de entrada y selects */
-   #form-crear-usuario input,
-   #form-crear-usuario select,
-   #form-editar-usuario input,
-   #form-editar-usuario select {
-     width: 100%;
-     max-width: 100%;
-     margin: 0 0 1.5rem 0;      /* espacio después de cada campo */
-     box-sizing: border-box;
-   }
-   
-   /* Botón de envío */
-   #form-crear-usuario button[type="submit"],
-   #form-editar-usuario button[type="submit"] {
-     width: 100%;
-     max-width: 100%;
-     margin: 0.5rem 0 0 0;
-   }
-   
-   /* Ajuste para el contenedor de botones en crear usuario */
-   #form-crear-usuario .campo-gestion {
-     width: 100%;
-     max-width: 100%;
-     margin: 0 0 1.5rem 0;
-   }
-  
   /* =========================================
        MEDIA QUERIES – MÓVILES
        ========================================= */
