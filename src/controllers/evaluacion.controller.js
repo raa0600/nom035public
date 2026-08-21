@@ -231,11 +231,15 @@ const finalizarEvaluacion = async (req, res, next) => {
             const pregunta = preguntasMap[id_pregunta];
             if (!pregunta) continue;
 
+            // ============================================================
+            // CAMBIO IMPORTANTE: compatible con INVERSO/DIRECTO y variantes
+            // ============================================================
             const tipo = pregunta.tipo_puntaje.toLowerCase();
             let puntaje = valor;
-            if (tipo === 'inversa' || tipo === '0') {
+
+            if (tipo === 'inverso' || tipo === 'inversa' || tipo === '0') {
                 puntaje = 4 - valor;
-            } else if (tipo === 'directa' || tipo === '1') {
+            } else if (tipo === 'directo' || tipo === 'directa' || tipo === '1') {
                 puntaje = valor;
             } else {
                 puntaje = valor;
