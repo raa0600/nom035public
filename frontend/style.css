@@ -32,8 +32,8 @@
   }
   
   /* =========================================
-       TIPOGRAFÍA GLOBAL
-       ========================================= */
+     TIPOGRAFÍA GLOBAL
+     ========================================= */
   button,
   input,
   select,
@@ -46,8 +46,8 @@
   }
   
   /* =========================================
-       ELEMENTOS COMUNES
-       ========================================= */
+     ELEMENTOS COMUNES
+     ========================================= */
   .logo {
     font-size: clamp(2.2rem, 8vw, 4rem);
     font-weight: 300;
@@ -85,8 +85,8 @@
   }
   
   /* =========================================
-       GLASSMORPHISM BASE
-       ========================================= */
+     GLASSMORPHISM BASE
+     ========================================= */
   form,
   .card,
   .intro-bar {
@@ -100,8 +100,8 @@
   }
   
   /* =========================================
-       BARRA INTRO
-       ========================================= */
+     BARRA INTRO
+     ========================================= */
   .intro-bar {
     padding: 14px 24px;
     font-size: 1.1rem;
@@ -144,8 +144,8 @@
   }
   
   /* =========================================
-       TARJETAS DE SELECCIÓN
-       ========================================= */
+     TARJETAS DE SELECCIÓN
+     ========================================= */
   .cards-wrapper {
     display: flex;
     flex-wrap: wrap;
@@ -210,8 +210,8 @@
   }
   
   /* =========================================
-       ICONOS PARA TÍTULOS DE SECCIONES (coinciden con tarjetas)
-       ========================================= */
+     ICONOS PARA TÍTULOS DE SECCIONES
+     ========================================= */
   .icono-nueva,
   .icono-continuar,
   .icono-reportes,
@@ -475,8 +475,8 @@
   }
   
   /* =========================================
-       BOTONES PRINCIPALES HOLOGRÁFICOS
-       ========================================= */
+     BOTONES PRINCIPALES HOLOGRÁFICOS
+     ========================================= */
   .btn-holografico,
   button[type="submit"],
   #login-btn {
@@ -537,8 +537,8 @@
   }
   
   /* =========================================
-       BOTÓN SECUNDARIO (SIN BRILLO, CON HOVER)
-       ========================================= */
+     BOTÓN SECUNDARIO (SIN BRILLO, CON HOVER)
+     ========================================= */
   .btn-holografico-secundario {
     font-size: clamp(1rem, 4vw, 1.3rem);
     backdrop-filter: blur(8px);
@@ -607,8 +607,8 @@
   }
   
   /* =========================================
-       HEADER DE LA APP
-       ========================================= */
+     HEADER DE LA APP
+     ========================================= */
   .app-header {
     display: flex;
     justify-content: space-between;
@@ -664,8 +664,8 @@
   }
   
   /* =========================================
-       ERROR – AMARILLO HOLOGRÁFICO
-       ========================================= */
+     ERROR – AMARILLO HOLOGRÁFICO
+     ========================================= */
   #auth-error {
     display: none;
     text-align: center;
@@ -680,8 +680,8 @@
   }
   
   /* =========================================
-       REPORTES Y GESTIÓN (TABLAS Y FORM)
-       ========================================= */
+     REPORTES Y GESTIÓN (TABLAS Y FORM)
+     ========================================= */
   #report-container {
     width: 100%;
     padding: 0 0.5rem;
@@ -734,8 +734,8 @@
   }
   
   /* =========================================
-       FORMULARIO DE GESTIÓN DE USUARIOS (CREACIÓN)
-       ========================================= */
+     FORMULARIO DE GESTIÓN DE USUARIOS
+     ========================================= */
   #form-crear-usuario {
     max-width: 420px;
     margin: 0 auto;
@@ -759,8 +759,8 @@
   }
   
   /* =========================================
-       AJUSTE DE ANCHO PARA CAMPOS DE GESTIÓN (FORZADO)
-       ========================================= */
+     AJUSTE DE ANCHO PARA CAMPOS DE GESTIÓN
+     ========================================= */
   #form-crear-usuario input,
   #form-crear-usuario select,
   #form-crear-usuario button {
@@ -791,8 +791,8 @@
   }
   
   /* =========================================
-       TAGS (PERSONAS) - si se usan
-       ========================================= */
+     TAGS
+     ========================================= */
   .tags-input {
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
@@ -831,8 +831,8 @@
   }
   
   /* =========================================
-       ICONOS HOLOGRÁFICOS ADICIONALES
-       ========================================= */
+     ICONOS HOLOGRÁFICOS ADICIONALES
+     ========================================= */
   .icon-holo {
     display: inline-flex;
     align-items: center;
@@ -898,7 +898,7 @@
   }
   
   /* =========================================
-     ICONO DE ÉXITO (check-circle)
+     ICONO DE ÉXITO
      ========================================= */
   .icono-exito {
     display: inline-block;
@@ -920,8 +920,8 @@
   }
   
   /* =========================================
-       UBICACIÓN (BOTÓN PEQUEÑO)
-       ========================================= */
+     UBICACIÓN
+     ========================================= */
   #get-location-btn {
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.4);
@@ -959,14 +959,13 @@
     align-items: center;
   }
   
-  /* Espacio inferior en formularios */
   #form-container {
     padding-bottom: 2rem;
   }
   
   /* =========================================
-       LOGO SVG
-       ========================================= */
+     LOGO SVG
+     ========================================= */
   .logo-img {
     display: block;
     width: 100%;
@@ -999,8 +998,8 @@
   }
   
   /* =========================================
-       TARJETA ALARGADA "CREAR USUARIO"
-       ========================================= */
+     TARJETA ALARGADA "CREAR USUARIO"
+     ========================================= */
   .crear-usuario-card {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
@@ -1037,8 +1036,8 @@
   }
   
   /* =========================================
-       CENTRADO DE TABLA
-       ========================================= */
+     CENTRADO DE TABLA
+     ========================================= */
   #tabla-usuarios {
     max-width: 100%;
     overflow-x: auto;
@@ -1051,8 +1050,8 @@
   }
   
   /* =========================================
-       SCROLL PERSONALIZADO - CORREGIDO (LUMINOSO Y SIN AMARILLO)
-       ========================================= */
+     SCROLL PERSONALIZADO
+     ========================================= */
   #tabla-usuarios {
     max-width: 100%;
     overflow-x: auto;
@@ -1090,8 +1089,8 @@
   }
   
   /* =========================================
-       ESTILOS PARA TABLA - HOVER Y MENSAJE
-       ========================================= */
+     ESTILOS PARA TABLA - HOVER Y MENSAJE
+     ========================================= */
   #tabla-usuarios tr:hover {
     background: rgba(255, 255, 255, 0.1) !important;
   }
@@ -1119,8 +1118,8 @@
   }
   
   /* =========================================
-       TOOLTIPS PERSONALIZADOS
-       ========================================= */
+     TOOLTIPS PERSONALIZADOS
+     ========================================= */
   [title] {
     position: relative;
   }
@@ -1166,20 +1165,19 @@
     padding-bottom: 0.2rem !important;
   }
   
-  /* Texto del select igual que los labels */
   select.campo-gestion,
   #form-crear-usuario select,
   #form-editar-usuario select {
     color: rgba(255, 255, 255, 0.9) !important;
   }
   
-  /* Opciones también con el mismo color */
   select.campo-gestion option,
   #form-crear-usuario select option,
   #form-editar-usuario select option {
     background: rgba(70, 70, 70, 0.95) !important;
     color: rgba(255, 255, 255, 0.9);
   }
+  
   select.campo-gestion::-webkit-listbox,
   #form-crear-usuario select::-webkit-listbox,
   #form-editar-usuario select::-webkit-listbox {
@@ -1191,7 +1189,7 @@
   }
   
   /* =========================================
-     SCROLL PERSONALIZADO PARA GUÍA I (igual que tabla)
+     SCROLL PERSONALIZADO PARA GUÍA I
      ========================================= */
   .scroll-guia-i {
     max-height: 80vh;
@@ -1300,47 +1298,69 @@
     margin-top: 0;
   }
   
-  @media (max-width: 480px) {
-    .formulario-nom035 {
-      padding: 1rem;
-      margin: 0.5rem auto;
-    }
-  
-    .botones-guia-iii {
-      flex-direction: column;
-    }
-  
-    .botones-guia-iii .btn-holografico-secundario,
-    .botones-guia-iii .btn-holografico {
-      width: 100%;
-    }
-  
-    .formulario-nom035 .opciones-label {
-      gap: 0.5rem;
-    }
-  
-    .formulario-nom035 .pregunta-item {
-      padding: 0.5rem;
-    }
+  /* =========================================
+     ESPACIADO EN TABLAS DE REPORTES Y RESULTADOS
+     ========================================= */
+  #form-container table th,
+  #form-container table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   }
   
-/* =========================================
-   RESTAURAR ESTILOS DEL LOGIN (usuario/contraseña)
-   ========================================= */
-   #auth-form {
+  #form-container table th {
+    background: rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+  }
+  
+  /* =========================================
+     NORMALIZACIÓN FINAL DE FORMULARIOS Y BOTONES
+     ========================================= */
+  
+  /* Fondo y dimensiones comunes */
+  #auth-form,
+  #form-crear-usuario,
+  #form-editar-usuario {
     background: rgba(255, 255, 255, 0.15) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 20px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    color: #fff !important;
     padding: 1.8rem !important;
     width: 100% !important;
     max-width: 400px !important;
+    margin: 0 auto !important;
     box-sizing: border-box !important;
   }
   
-  #auth-form input {
+  /* Etiquetas */
+  #form-crear-usuario label,
+  #form-editar-usuario label {
+    display: block !important;
+    text-align: left !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 0.5rem 0 !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+  
+  /* Campos de entrada y selects */
+  #auth-form input,
+  #auth-form input[type="email"],
+  #auth-form input[type="password"],
+  #form-crear-usuario input,
+  #form-crear-usuario input[type="text"],
+  #form-crear-usuario input[type="email"],
+  #form-crear-usuario input[type="password"],
+  #form-crear-usuario select,
+  #form-editar-usuario input,
+  #form-editar-usuario input[type="text"],
+  #form-editar-usuario input[type="email"],
+  #form-editar-usuario input[type="password"],
+  #form-editar-usuario select {
     padding: 10px 14px !important;
     border-radius: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -1350,36 +1370,266 @@
     width: 100% !important;
     box-sizing: border-box !important;
     outline: none !important;
-    margin-bottom: 0.9rem !important;
+    margin: 0 0 1.5rem 0 !important;
+    height: auto !important;
+    transition: 0.3s !important;
   }
   
-  #auth-form input::placeholder {
+  /* Placeholder */
+  #auth-form input::placeholder,
+  #form-crear-usuario input::placeholder,
+  #form-editar-usuario input::placeholder {
     color: rgba(255, 255, 255, 0.7) !important;
   }
   
-  #auth-form input:focus {
+  /* Foco */
+  #auth-form input:focus,
+  #form-crear-usuario input:focus,
+  #form-crear-usuario select:focus,
+  #form-editar-usuario input:focus,
+  #form-editar-usuario select:focus {
     border-color: #a0c4ff !important;
     background: rgba(255, 255, 255, 0.25) !important;
   }
+  
+  /* =========================================
+     BOTONES CON TIPOGRAFÍA HOLOGRÁFICA GLOBAL
+     ========================================= */
+  #auth-form button[type="submit"],
+  #form-crear-usuario button[type="submit"],
+  #form-crear-usuario #cancelar-creacion,
+  #form-editar-usuario button[type="submit"] {
+    font-family: 'Inter', sans-serif !important;
+    font-size: clamp(1rem, 4vw, 1.3rem) !important;
+    font-weight: 300 !important;
+    letter-spacing: -1px !important;
+    line-height: normal !important;
+    padding: 12px !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    margin-top: 0.5rem !important;
+  }
+  
+  /* Ajuste específico para cancelar: sin espacio inferior */
+  #form-crear-usuario #cancelar-creacion {
+    margin-bottom: 0 !important;
+  }
+  
+  /* Eliminar espacio extra del contenedor de botones */
+  #form-crear-usuario div[style*="flex-direction:column"] {
+    margin-bottom: 0 !important;
+  }
 
   /* =========================================
-   ESPACIADO EN TABLAS DE REPORTES Y RESULTADOS
+   RECOMENDACIÓN CON BRILLO DORADO
    ========================================= */
-#form-container table th,
-#form-container table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+.recomendacion-destacada {
+  background: linear-gradient(135deg,
+      rgba(250, 207, 41, 0.18) 0%,
+      rgba(255, 215, 97, 0.06) 50%,
+      rgba(250, 207, 41, 0.12) 100%);
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #facf29;
+  box-shadow:
+    0 0 20px rgba(250, 207, 41, 0.25),
+    inset 0 0 20px rgba(250, 207, 41, 0.08);
 }
 
-#form-container table th {
-  background: rgba(255, 255, 255, 0.2);
+.recomendacion-destacada h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
   font-weight: 600;
+  background: linear-gradient(135deg, #facf29, #fff3b0, #facf29);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: holographic 3s ease infinite;
+  text-shadow: 0 0 12px rgba(250, 207, 41, 0.6);
 }
 
+.recomendacion-destacada p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(250, 207, 41, 0.4);
+}
+
+/* =========================================
+   REDUCIR ESPACIOS EN FORMULARIOS
+   ========================================= */
+
+/* Espacio entre usuario y contraseña (login) */
+#auth-form input {
+  margin-bottom: 0.6rem !important;
+}
+
+/* Espacio entre contraseña y botón login */
+#auth-form button[type="submit"] {
+  margin-top: 0.3rem !important;
+}
+
+/* Espacio entre Crear usuario y Cancelar */
+#form-crear-usuario button[type="submit"],
+#form-crear-usuario #cancelar-creacion {
+  margin-top: 0 !important;
+  margin-bottom: 0.3rem !important;
+}
+
+/* Reducir el gap del contenedor de botones */
+#form-crear-usuario div[style*="flex-direction:column"] {
+  gap: 0.3rem !important;
+}
+
+/* Opcional: también reducir espacio entre campos de crear y actualizar */
+#form-crear-usuario input,
+#form-crear-usuario select,
+#form-editar-usuario input,
+#form-editar-usuario select {
+  margin-bottom: 0.8rem !important;
+}
+
+/* =========================================
+   AJUSTES FINOS DE ESPACIADO
+   ========================================= */
+
+/* Reducir espacio entre usuario y contraseña (login) */
+#auth-form {
+  gap: 0.5rem !important;           /* reduce el gap general del formulario */
+}
+
+#auth-form input {
+  margin-bottom: 0 !important;      /* elimina el margen inferior extra */
+}
+
+/* Aumentar espacio entre último campo y botones en crear usuario */
+#form-crear-usuario div[style*="flex-direction:column"] {
+  margin-top: 1.5rem !important;    /* separa los botones del campo anterior */
+}
+
+/* (Opcional) Si quieres también separar los botones entre sí */
+#form-crear-usuario button[type="submit"],
+#form-crear-usuario #cancelar-creacion {
+  margin-bottom: 0.4rem !important; /* espacio entre botones */
+}
+
+/* =========================================
+   AJUSTE FINO DE ESPACIOS
+   ========================================= */
+
+/* Más espacio entre el campo de rol y los botones */
+#form-crear-usuario #rol-usuario {
+  margin-bottom: 2.5rem !important;
+}
+
+/* Menos espacio entre usuario y contraseña en login */
+#auth-form {
+  gap: 0.25rem !important;          /* reduce la separación general */
+}
+
+#auth-form input {
+  margin-bottom: 0 !important;      /* elimina márgenes extra */
+}
+
+/* Espacio más reducido entre contraseña y botón de login */
+#auth-form button[type="submit"] {
+  margin-top: 0.25rem !important;
+}
+
+/* =========================================
+   CORREGIR ESPACIO EN LOGIN (usuario/contraseña)
+   ========================================= */
+   #auth-form input[type="email"],
+   #auth-form input[type="password"] {
+     margin-bottom: 0.6rem !important;   /* espacio entre usuario y contraseña */
+   }
+   
+   #auth-form {
+     gap: 0.4rem !important;             /* espacio entre todos los elementos */
+   }
+   
+   #auth-form button[type="submit"] {
+     margin-top: 0.4rem !important;      /* espacio entre contraseña y botón */
+   }
+
+   /* =========================================
+   SIMULAR ZOOM DEL 90% EN ESCRITORIO
+   ========================================= */
+@media screen and (min-width: 1024px) {
+  body {
+    zoom: 0.95;
+  }
+}
+
+/* =========================================
+   ESPACIO ADICIONAL BAJO EL CAMPO DE ROL
+   ========================================= */
+   #form-editar-usuario #edit-rol {
+    margin-bottom: 2.3rem !important;   /* un poco más que el estándar 1.5rem */
+  }
 
   /* =========================================
-       MEDIA QUERIES – MÓVILES
-       ========================================= */
+   ESPACIO ENTRE BOTONES CREAR Y CANCELAR
+   ========================================= */
+#form-crear-usuario div[style*="flex-direction:column"] {
+  gap: 1rem !important;
+}
+
+/* =========================================
+   RECOMENDACIÓN CON BRILLO DORADO
+   ========================================= */
+   .recomendacion-destacada {
+    background: linear-gradient(135deg,
+        rgba(250, 207, 41, 0.18) 0%,
+        rgba(255, 215, 97, 0.06) 50%,
+        rgba(250, 207, 41, 0.12) 100%);
+    padding: 1rem 1.2rem;
+    border-radius: 14px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #facf29;
+    box-shadow:
+      0 0 20px rgba(250, 207, 41, 0.25),
+      inset 0 0 20px rgba(250, 207, 41, 0.08);
+  }
+  
+  .recomendacion-destacada h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #facf29, #fff3b0, #facf29);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: holographic 3s ease infinite;
+    text-shadow: 0 0 12px rgba(250, 207, 41, 0.6);
+  }
+  
+  .recomendacion-destacada p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(250, 207, 41, 0.4);
+  }
+  
+  /* =========================================
+     MÁS ESPACIO ENTRE PREGUNTA Y OPCIONES EN GUÍAS
+     ========================================= */
+  .formulario-nom035 .pregunta-item p {
+    margin-bottom: 0.6rem !important;  /* antes 0.3rem */
+  }
+  
+  /* =========================================
+     MEDIA QUERIES – MÓVILES
+     ========================================= */
   @media (max-width: 480px) {
     html {
       overscroll-behavior: none;
@@ -1513,5 +1763,27 @@
     #form-crear-usuario button[type="submit"] {
       margin-top: 0.5rem !important;
       margin-bottom: 0.5rem !important;
+    }
+  
+    .formulario-nom035 {
+      padding: 1rem;
+      margin: 0.5rem auto;
+    }
+  
+    .botones-guia-iii {
+      flex-direction: column;
+    }
+  
+    .botones-guia-iii .btn-holografico-secundario,
+    .botones-guia-iii .btn-holografico {
+      width: 100%;
+    }
+  
+    .formulario-nom035 .opciones-label {
+      gap: 0.5rem;
+    }
+  
+    .formulario-nom035 .pregunta-item {
+      padding: 0.5rem;
     }
   }

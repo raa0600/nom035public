@@ -308,7 +308,6 @@ const getEvaluacionesEnCurso = async (req, res, next) => {
         }
         const id_empleado = userResult.recordset[0].id_empleado;
         const evaluaciones = await evaluacionModel.getEvaluacionesByEmpleado(id_empleado);
-        // Solo evaluaciones en curso de Guía III (Guía I ya completada)
         const enCurso = evaluaciones.filter(e => e.estatus === 'En_proceso');
         res.json(enCurso);
     } catch (err) {
@@ -356,7 +355,7 @@ const getEstadoActual = async (req, res, next) => {
             .query(`
                 SELECT TOP 1 id_evaluacion, estatus, fecha_aplicacion
                 FROM EVALUACION
-                WHERE id_empleado = @id_empleado AND estatus IN ('En_proceso', 'Canalizacion_requerida')
+                WHERE id_empleado = @id_empleado AND estatus IN ('En_proceso', 'Canalizacion_requerida', 'Completada')
                 ORDER BY fecha_aplicacion DESC
             `);
         res.json(evalResult.recordset[0] || null);
@@ -385,19 +384,40 @@ const getEvaluacionesCompletadas = async (req, res, next) => {
     }
 };
 
+// ============================================================
+// RESULTADOS DE UNA EVALUACIÓN
+// ============================================================
 const getResultados = async (req, res, next) => {
     try {
         const { id } = req.params;
         const pool = getPool();
+
         const global = await pool.request()
             .input('id', sql.Int, id)
             .query('SELECT * FROM RESULTADO_GLOBAL WHERE id_evaluacion = @id');
+
         const categorias = await pool.request()
             .input('id', sql.Int, id)
-            .query('SELECT * FROM RESULTADO_CATEGORIA WHERE id_evaluacion = @id');
+            .query(`
+                SELECT rc.id_resultado_cat, rc.id_evaluacion, rc.id_categoria, c.nombre AS categoria_nombre,
+                       rc.puntaje_bruto, rc.puntaje_maximo, rc.puntaje_porcentaje, rc.nivel_riesgo
+                FROM RESULTADO_CATEGORIA rc
+                JOIN CATEGORIA c ON rc.id_categoria = c.id_categoria
+                WHERE rc.id_evaluacion = @id
+                ORDER BY rc.id_categoria
+            `);
+
         const dominios = await pool.request()
             .input('id', sql.Int, id)
-            .query('SELECT * FROM RESULTADO_DOMINIO WHERE id_evaluacion = @id');
+            .query(`
+                SELECT rd.id_resultado_dom, rd.id_evaluacion, rd.id_dominio, d.nombre AS dominio_nombre,
+                       rd.puntaje_bruto, rd.puntaje_maximo, rd.puntaje_porcentaje, rd.nivel_riesgo
+                FROM RESULTADO_DOMINIO rd
+                JOIN DOMINIO d ON rd.id_dominio = d.id_dominio
+                WHERE rd.id_evaluacion = @id
+                ORDER BY rd.id_dominio
+            `);
+
         res.json({
             global: global.recordset[0] || null,
             categorias: categorias.recordset || [],

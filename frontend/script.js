@@ -712,7 +712,7 @@ async function mostrarCanalizaciones() {
                             <th style="padding:10px 14px;">Nombre</th>
                             <th style="padding:10px 14px;">Departamento</th>
                             <th style="padding:10px 14px;">Fecha</th>
-                            <th style="padding:10px 14px;">Acciones</th>
+                            <th style="padding:10px 14px; text-align:center;">Acciones</th>
                         </tr>
                         ${data.map(u => `
                             <tr style="background: rgba(255,0,0,0.3) !important; border-bottom: 1px solid rgba(255,0,0,0.2);">
@@ -720,8 +720,8 @@ async function mostrarCanalizaciones() {
                                 <td style="padding:10px 14px;">${u.empleado_nombre}</td>
                                 <td style="padding:10px 14px;">${u.departamento_seccion_area || 'N/A'}</td>
                                 <td style="padding:10px 14px;">${new Date(u.fecha_aplicacion).toLocaleDateString()}</td>
-                                <td style="padding:10px 14px; white-space:nowrap;">
-                                    <button class="btn-accion eliminar-canalizacion" title="Eliminar canalización" data-id="${u.id_evaluacion}" data-nombre="${u.empleado_nombre}">
+                                <td style="padding:10px 14px; white-space:nowrap; text-align:center;">
+                                    <button class="btn-accion eliminar-canalizacion" title="Eliminar" data-id="${u.id_evaluacion}" data-nombre="${u.empleado_nombre}">
                                         <span class="icono-eliminar"></span>
                                     </button>
                                 </td>
@@ -796,6 +796,13 @@ async function iniciarEvaluacion() {
                     'Ya tienes una evaluación en curso. ¿Deseas continuar donde la dejaste?',
                     () => cargarGuiaIII(evaluacion.id_evaluacion),
                     'Continuar'
+                );
+            } else if (evaluacion.estatus === 'Completada') {
+                mostrarModalExito(
+                    'Evaluación completada',
+                    'Recursos Humanos revisará la información y se pondrá en contacto si es necesario.',
+                    goHome,
+                    'Aceptar'
                 );
             }
             return;
@@ -951,63 +958,73 @@ async function cargarGuiaIII(idEvaluacion) {
         const respuestasMap = {};
         respuestas.forEach(r => { respuestasMap[r.id_pregunta] = r.valor_escogido; });
 
-        // Agrupar por categoría, dominio, dimensión
-        const categorias = {};
-        preguntas.forEach(p => {
-            if (!categorias[p.id_categoria]) {
-                categorias[p.id_categoria] = { nombre: p.categoria_nombre, dominios: {} };
-            }
-            if (!categorias[p.id_categoria].dominios[p.id_dominio]) {
-                categorias[p.id_categoria].dominios[p.id_dominio] = { nombre: p.dominio_nombre, dimensiones: {} };
-            }
-            if (!categorias[p.id_categoria].dominios[p.id_dominio].dimensiones[p.id_dimension]) {
-                categorias[p.id_categoria].dominios[p.id_dominio].dimensiones[p.id_dimension] = { nombre: p.dimension_nombre, preguntas: [] };
-            }
-            categorias[p.id_categoria].dominios[p.id_dominio].dimensiones[p.id_dimension].preguntas.push(p);
-        });
+        const bloques = [
+            { inicio: 1, fin: 5, titulo: 'Para responder las preguntas siguientes considere las condiciones ambientales de su centro de trabajo.' },
+            { inicio: 6, fin: 8, titulo: 'Para responder a las preguntas siguientes piense en la cantidad y ritmo de trabajo que tiene.' },
+            { inicio: 9, fin: 12, titulo: 'Las preguntas siguientes están relacionadas con el esfuerzo mental que le exige su trabajo.' },
+            { inicio: 13, fin: 16, titulo: 'Las preguntas siguientes están relacionadas con las actividades que realiza en su trabajo y las responsabilidades que tiene.' },
+            { inicio: 17, fin: 22, titulo: 'Las preguntas siguientes están relacionadas con su jornada de trabajo.' },
+            { inicio: 23, fin: 28, titulo: 'Las preguntas siguientes están relacionadas con las decisiones que puede tomar en su trabajo.' },
+            { inicio: 29, fin: 30, titulo: 'Las preguntas siguientes están relacionadas con cualquier tipo de cambio que ocurra en su trabajo (considere los últimos cambios realizados).' },
+            { inicio: 31, fin: 36, titulo: 'Las preguntas siguientes están relacionadas con la capacitación e información que se le proporciona sobre su trabajo.' },
+            { inicio: 37, fin: 41, titulo: 'Las preguntas siguientes están relacionadas con el o los jefes con quien tiene contacto.' },
+            { inicio: 42, fin: 46, titulo: 'Las preguntas siguientes se refieren a las relaciones con sus compañeros.' },
+            { inicio: 47, fin: 56, titulo: 'Las preguntas siguientes están relacionadas con la información que recibe sobre su rendimiento en el trabajo, el reconocimiento, el sentido de pertenencia y la estabilidad que le ofrece su trabajo.' },
+            { inicio: 57, fin: 64, titulo: 'Las preguntas siguientes están relacionadas con actos de violencia laboral (malos tratos, acoso, hostigamiento, acoso psicológico).' }
+        ];
+
+        let displayNumber = 1; // numeración consecutiva en pantalla
 
         let html = `
             <button type="button" class="back-btn" id="back-btn-guia-iii">← Atrás</button>
             <div style="color:white; max-height:80vh; overflow-y:auto; padding:0;" class="scroll-guia-i">
                 <form id="form-guia-iii" class="formulario-nom035">
                     <h2 class="form-title">Guía de Referencia III</h2>
-                    <p style="margin-bottom:1rem;">Seleccione una opción para cada pregunta. Las preguntas condicionales aparecerán según sus respuestas.</p>
+                    <p style="margin-bottom:1rem;">Seleccione una opción para cada pregunta.</p>
         `;
 
-        // Preguntas de control (filtros)
+        // Bloques principales
+        for (const bloque of bloques) {
+            html += `<h3 style="margin-top:1.5rem; margin-bottom:0.5rem; padding-left:0.5rem;">${bloque.titulo}</h3>`;
+            const preguntasBloque = preguntas.filter(p => p.numero >= bloque.inicio && p.numero <= bloque.fin);
+            preguntasBloque.forEach(pregunta => {
+                const valorActual = respuestasMap[pregunta.id_pregunta] !== undefined ? respuestasMap[pregunta.id_pregunta] : -1;
+                html += `
+                    <div class="pregunta-item" data-id-pregunta="${pregunta.id_pregunta}">
+                        <p style="margin:0 0 0.6rem 0; font-size:0.95rem;">${displayNumber}. ${pregunta.texto}</p>
+                        <div class="opciones-label">
+                            ${['Siempre','Casi siempre','Algunas veces','Casi nunca','Nunca'].map((opcion, idx) => `
+                                <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                                    <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${idx}" ${valorActual === idx ? 'checked' : ''}>
+                                    ${opcion}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                displayNumber++;
+            });
+        }
+
+        // Clientes condicional
         html += `
-            <div class="pregunta-item">
+            <div class="pregunta-item" style="margin-top:1.5rem;">
                 <p style="margin:0 0 0.5rem 0; font-weight:bold;">¿En su trabajo debe brindar servicio a clientes o usuarios?</p>
                 <div class="opciones-label">
-                    <label><input type="radio" name="filtro_clientes" value="1" onchange="toggleCondicional('clientes', true)"> Sí</label>
-                    <label><input type="radio" name="filtro_clientes" value="0" onchange="toggleCondicional('clientes', false)" checked> No</label>
+                    <label><input type="radio" name="filtro_clientes" value="1"> Sí</label>
+                    <label><input type="radio" name="filtro_clientes" value="0" checked> No</label>
                 </div>
             </div>
-            <div class="pregunta-item">
-                <p style="margin:0 0 0.5rem 0; font-weight:bold;">¿Es usted jefe de otros trabajadores?</p>
-                <div class="opciones-label">
-                    <label><input type="radio" name="filtro_jefe" value="1" onchange="toggleCondicional('jefe', true)"> Sí</label>
-                    <label><input type="radio" name="filtro_jefe" value="0" onchange="toggleCondicional('jefe', false)" checked> No</label>
-                </div>
-            </div>
-        `;
-
-        // Renderizar categorías
-        for (const [idCat, cat] of Object.entries(categorias)) {
-            html += `<h3 style="margin-top:1.5rem;">${cat.nombre}</h3>`;
-            for (const [idDom, dom] of Object.entries(cat.dominios)) {
-                html += `<h4>${dom.nombre}</h4>`;
-                for (const [idDim, dim] of Object.entries(dom.dimensiones)) {
-                    html += `<h5>${dim.nombre}</h5>`;
-                    for (const pregunta of dim.preguntas) {
-                        let condicional = '';
-                        if (pregunta.numero >= 65 && pregunta.numero <= 68) condicional = 'condicional-clientes';
-                        else if (pregunta.numero >= 69 && pregunta.numero <= 72) condicional = 'condicional-jefe';
-
+            <div class="condicional-clientes" style="display:none;">
+                <h3 style="margin-top:1rem; margin-bottom:0.5rem; padding-left:0.5rem;">Las preguntas siguientes están relacionadas con la atención a clientes y usuarios.</h3>
+                ${(() => {
+                    let htmlClientes = '';
+                    const preguntasClientes = preguntas.filter(p => p.numero >= 65 && p.numero <= 68);
+                    preguntasClientes.forEach(pregunta => {
                         const valorActual = respuestasMap[pregunta.id_pregunta] !== undefined ? respuestasMap[pregunta.id_pregunta] : -1;
-                        html += `
-                            <div class="pregunta-item ${condicional}" data-id-pregunta="${pregunta.id_pregunta}" style="${condicional ? 'display:none;' : ''}">
-                                <p style="margin:0 0 0.3rem 0; font-size:0.95rem;">${pregunta.numero}. ${pregunta.texto}</p>
+                        htmlClientes += `
+                            <div class="pregunta-item" data-id-pregunta="${pregunta.id_pregunta}">
+                                <p style="margin:0 0 0.6rem 0; font-size:0.95rem;">${displayNumber}. ${pregunta.texto}</p>
                                 <div class="opciones-label">
                                     ${['Siempre','Casi siempre','Algunas veces','Casi nunca','Nunca'].map((opcion, idx) => `
                                         <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
@@ -1018,10 +1035,48 @@ async function cargarGuiaIII(idEvaluacion) {
                                 </div>
                             </div>
                         `;
-                    }
-                }
-            }
-        }
+                        displayNumber++;
+                    });
+                    return htmlClientes;
+                })()}
+            </div>
+        `;
+
+        // Jefes condicional
+        html += `
+            <div class="pregunta-item" style="margin-top:1.5rem;">
+                <p style="margin:0 0 0.5rem 0; font-weight:bold;">¿Soy jefe de otros trabajadores?</p>
+                <div class="opciones-label">
+                    <label><input type="radio" name="filtro_jefe" value="1"> Sí</label>
+                    <label><input type="radio" name="filtro_jefe" value="0" checked> No</label>
+                </div>
+            </div>
+            <div class="condicional-jefe" style="display:none;">
+                <h3 style="margin-top:1rem; margin-bottom:0.5rem; padding-left:0.5rem;">Las preguntas siguientes están relacionadas con las actitudes de las personas que supervisa.</h3>
+                ${(() => {
+                    let htmlJefes = '';
+                    const preguntasJefes = preguntas.filter(p => p.numero >= 69 && p.numero <= 72);
+                    preguntasJefes.forEach(pregunta => {
+                        const valorActual = respuestasMap[pregunta.id_pregunta] !== undefined ? respuestasMap[pregunta.id_pregunta] : -1;
+                        htmlJefes += `
+                            <div class="pregunta-item" data-id-pregunta="${pregunta.id_pregunta}">
+                                <p style="margin:0 0 0.6rem 0; font-size:0.95rem;">${displayNumber}. ${pregunta.texto}</p>
+                                <div class="opciones-label">
+                                    ${['Siempre','Casi siempre','Algunas veces','Casi nunca','Nunca'].map((opcion, idx) => `
+                                        <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                                            <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${idx}" ${valorActual === idx ? 'checked' : ''}>
+                                            ${opcion}
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                        displayNumber++;
+                    });
+                    return htmlJefes;
+                })()}
+            </div>
+        `;
 
         html += `
                     <div class="botones-guia-iii">
@@ -1036,7 +1091,7 @@ async function cargarGuiaIII(idEvaluacion) {
         formContainer.classList.remove('hidden');
         document.getElementById('back-btn-guia-iii').addEventListener('click', goBack);
 
-        // Guardado automático al cambiar respuesta
+        // Guardado automático al cambiar cualquier radio de pregunta
         document.querySelectorAll('#form-guia-iii input[type="radio"]').forEach(input => {
             input.addEventListener('change', async (e) => {
                 if (e.target.name.startsWith('pregunta_')) {
@@ -1044,6 +1099,32 @@ async function cargarGuiaIII(idEvaluacion) {
                     const valor = parseInt(e.target.value);
                     await guardarRespuestaIndividual(idEvaluacion, preguntaId, valor);
                 }
+            });
+        });
+
+        // Listener para filtro de clientes
+        document.querySelectorAll('input[name="filtro_clientes"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const mostrar = e.target.value === '1';
+                document.querySelectorAll('.condicional-clientes').forEach(el => {
+                    el.style.display = mostrar ? 'block' : 'none';
+                    if (!mostrar) {
+                        el.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+                    }
+                });
+            });
+        });
+
+        // Listener para filtro de jefes
+        document.querySelectorAll('input[name="filtro_jefe"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const mostrar = e.target.value === '1';
+                document.querySelectorAll('.condicional-jefe').forEach(el => {
+                    el.style.display = mostrar ? 'block' : 'none';
+                    if (!mostrar) {
+                        el.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+                    }
+                });
             });
         });
 
@@ -1073,19 +1154,6 @@ async function cargarGuiaIII(idEvaluacion) {
             e.preventDefault();
             await finalizarEvaluacion(idEvaluacion);
         });
-
-        // Inicializar visibilidad de condicionales
-        window.toggleCondicional = (tipo, visible) => {
-            const selector = tipo === 'clientes' ? '.condicional-clientes' : '.condicional-jefe';
-            document.querySelectorAll(selector).forEach(el => {
-                el.style.display = visible ? 'block' : 'none';
-                if (!visible) {
-                    el.querySelectorAll('input[type="radio"]').forEach(radio => {
-                        radio.checked = false;
-                    });
-                }
-            });
-        };
 
     } catch (err) {
         alert('❌ ' + err.message);
@@ -1236,22 +1304,38 @@ async function verResultadoEvaluacion(idEvaluacion) {
                         <p><strong>Puntaje global:</strong> ${data.global.puntaje_bruto} / ${data.global.puntaje_maximo} (${data.global.puntaje_porcentaje}%)</p>
                         <p><strong>Nivel de riesgo:</strong> ${data.global.resultado_final}</p>
                     </div>
-                    <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px; margin-bottom:1.5rem; border-left: 4px solid #facf29;">
-                        <h3 style="margin-top:0; margin-bottom:0.5rem; color:#facf29;">Recomendación</h3>
-                        <p style="margin:0; font-size:0.95rem; line-height:1.5;">${obtenerRecomendacion(data.global.resultado_final)}</p>
+                    <div class="recomendacion-destacada">
+                        <h3>Recomendación</h3>
+                        <p>${obtenerRecomendacion(data.global.resultado_final)}</p>
                     </div>
                     <h3>Categorías</h3>
                     <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1rem;">
-                        <tr><th>Categoría</th><th>Puntaje</th><th>Nivel</th></tr>
+                        <tr>
+                            <th>Categoría</th>
+                            <th style="text-align:center;">Puntaje</th>
+                            <th style="text-align:center;">Nivel de riesgo</th>
+                        </tr>
                         ${data.categorias.map(c => `
-                            <tr><td>${c.id_categoria}</td><td>${c.puntaje_bruto}/${c.puntaje_maximo}</td><td>${c.nivel_riesgo}</td></tr>
+                            <tr>
+                                <td>${c.categoria_nombre}</td>
+                                <td style="text-align:center;">${c.puntaje_bruto}/${c.puntaje_maximo}</td>
+                                <td style="text-align:center;">${c.nivel_riesgo}</td>
+                            </tr>
                         `).join('')}
                     </table>
                     <h3>Dominios</h3>
                     <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px;">
-                        <tr><th>Dominio</th><th>Puntaje</th><th>Nivel</th></tr>
+                        <tr>
+                            <th>Dominio</th>
+                            <th style="text-align:center;">Puntaje</th>
+                            <th style="text-align:center;">Nivel de riesgo</th>
+                        </tr>
                         ${data.dominios.map(d => `
-                            <tr><td>${d.id_dominio}</td><td>${d.puntaje_bruto}/${d.puntaje_maximo}</td><td>${d.nivel_riesgo}</td></tr>
+                            <tr>
+                                <td>${d.dominio_nombre}</td>
+                                <td style="text-align:center;">${d.puntaje_bruto}/${d.puntaje_maximo}</td>
+                                <td style="text-align:center;">${d.nivel_riesgo}</td>
+                            </tr>
                         `).join('')}
                     </table>
                 ` : '<p>No hay resultados disponibles.</p>'}
