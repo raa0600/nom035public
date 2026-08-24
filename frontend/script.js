@@ -973,7 +973,7 @@ async function cargarGuiaIII(idEvaluacion) {
             { inicio: 57, fin: 64, titulo: 'Las preguntas siguientes están relacionadas con actos de violencia laboral (malos tratos, acoso, hostigamiento, acoso psicológico).' }
         ];
 
-        let displayNumber = 1; // numeración consecutiva en pantalla
+        let displayNumber = 1;
 
         let html = `
             <button type="button" class="back-btn" id="back-btn-guia-iii">← Atrás</button>
@@ -995,7 +995,7 @@ async function cargarGuiaIII(idEvaluacion) {
                         <div class="opciones-label">
                             ${['Siempre','Casi siempre','Algunas veces','Casi nunca','Nunca'].map((opcion, idx) => `
                                 <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
-                                    <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${idx}" ${valorActual === idx ? 'checked' : ''}>
+                                    <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${4 - idx}" ${valorActual === (4 - idx) ? 'checked' : ''}>
                                     ${opcion}
                                 </label>
                             `).join('')}
@@ -1028,7 +1028,7 @@ async function cargarGuiaIII(idEvaluacion) {
                                 <div class="opciones-label">
                                     ${['Siempre','Casi siempre','Algunas veces','Casi nunca','Nunca'].map((opcion, idx) => `
                                         <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
-                                            <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${idx}" ${valorActual === idx ? 'checked' : ''}>
+                                            <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${4 - idx}" ${valorActual === (4 - idx) ? 'checked' : ''}>
                                             ${opcion}
                                         </label>
                                     `).join('')}
@@ -1064,7 +1064,7 @@ async function cargarGuiaIII(idEvaluacion) {
                                 <div class="opciones-label">
                                     ${['Siempre','Casi siempre','Algunas veces','Casi nunca','Nunca'].map((opcion, idx) => `
                                         <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
-                                            <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${idx}" ${valorActual === idx ? 'checked' : ''}>
+                                            <input type="radio" name="pregunta_${pregunta.id_pregunta}" value="${4 - idx}" ${valorActual === (4 - idx) ? 'checked' : ''}>
                                             ${opcion}
                                         </label>
                                     `).join('')}
