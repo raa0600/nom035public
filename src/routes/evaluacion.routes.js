@@ -38,6 +38,7 @@ router.post('/:id/pausar', evaluacionController.pausarEvaluacion);
 // REPORTES (solo admin y supervisor)
 // ============================================================
 router.get('/completadas', authorize([1, 2]), evaluacionController.getEvaluacionesCompletadas);
+router.get('/graficas/datos', authorize([1, 2]), evaluacionController.getDatosGraficas);
 
 // ============================================================
 // CANALIZACIONES (solo admin y supervisor)

@@ -1,5 +1,5 @@
 /* =========================================
-   FONDO ANIMADO AZUL (tonos ligeramente más claros)
+   FONDO ANIMADO VERDE BOSQUE (Tono oscuro)
    ========================================= */
    body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -12,20 +12,18 @@
     padding: 1.5rem 1.5rem 2rem;
     box-sizing: border-box;
   
-    background: linear-gradient(135deg, #0B2942, #11436B, #175A90, #1E75BD, #258FE6);
+    background: linear-gradient(135deg, #0B1F14, #123524, #1B4332, #2D6A4F, #40916C);
     background-size: 400% 400%;
-    animation: gradientShift 12s ease infinite;
+    animation: gradientShift 15s ease infinite;
   }
   
   @keyframes gradientShift {
     0% {
       background-position: 0% 50%;
     }
-  
     50% {
       background-position: 100% 50%;
     }
-  
     100% {
       background-position: 0% 50%;
     }
@@ -223,7 +221,7 @@
     width: 2rem;
     height: 2rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(200, 225, 255, 1) 25%, rgba(255, 255, 255, 1) 50%, rgba(210, 235, 255, 1) 75%, rgba(255, 255, 255, 1) 100%);
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(200, 255, 200, 1) 25%, rgba(255, 255, 255, 1) 50%, rgba(210, 255, 210, 1) 75%, rgba(255, 255, 255, 1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-size: contain;
     mask-size: contain;
@@ -258,7 +256,7 @@
     width: 1.5rem;
     height: 1.5rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(200, 225, 255, 1) 25%, rgba(255, 255, 255, 1) 50%, rgba(210, 235, 255, 1) 75%, rgba(255, 255, 255, 1) 100%);
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(200, 255, 200, 1) 25%, rgba(255, 255, 255, 1) 50%, rgba(210, 255, 210, 1) 75%, rgba(255, 255, 255, 1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/%3E%3C/svg%3E");
@@ -275,7 +273,7 @@
     width: 1.5rem;
     height: 1.5rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' y1='11' x2='10' y2='17'/%3E%3Cline x1='14' y1='11' x2='14' y2='17'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' y1='11' x2='10' y2='17'/%3E%3Cline x1='14' y1='11' x2='14' y2='17'/%3E%3C/svg%3E");
@@ -300,7 +298,7 @@
     width: 1.5rem;
     height: 1.5rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 9.9-1'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 9.9-1'/%3E%3C/svg%3E");
@@ -317,7 +315,7 @@
     width: 2rem;
     height: 2rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4'/%3E%3C/svg%3E");
@@ -334,7 +332,7 @@
     width: 1.5rem;
     height: 1.5rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E");
@@ -351,7 +349,7 @@
     width: 1.2rem;
     height: 1.2rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'/%3E%3C/svg%3E");
@@ -370,7 +368,7 @@
     width: 2rem;
     height: 2rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/%3E%3C/svg%3E");
@@ -388,7 +386,7 @@
     width: 2rem;
     height: 2rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E");
@@ -406,7 +404,7 @@
     width: 1rem;
     height: 1rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E");
@@ -443,7 +441,7 @@
     width: 1rem;
     height: 1rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='2' x2='12' y2='6'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='4.93' y1='4.93' x2='7.76' y2='7.76'/%3E%3Cline x1='16.24' y1='16.24' x2='19.07' y2='19.07'/%3E%3Cline x1='2' y1='12' x2='6' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='19.07' x2='7.76' y2='16.24'/%3E%3Cline x1='16.24' y1='7.76' x2='19.07' y2='4.93'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='2' x2='12' y2='6'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='4.93' y1='4.93' x2='7.76' y2='7.76'/%3E%3Cline x1='16.24' y1='16.24' x2='19.07' y2='19.07'/%3E%3Cline x1='2' y1='12' x2='6' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='19.07' x2='7.76' y2='16.24'/%3E%3Cline x1='16.24' y1='7.76' x2='19.07' y2='4.93'/%3E%3C/svg%3E");
@@ -497,9 +495,9 @@
   
     background: linear-gradient(135deg,
         rgba(255, 255, 255, 0.35) 0%,
-        rgba(200, 225, 255, 0.3) 25%,
+        rgba(200, 255, 200, 0.3) 25%,
         rgba(255, 255, 255, 0.5) 50%,
-        rgba(210, 235, 255, 0.3) 75%,
+        rgba(210, 255, 210, 0.3) 75%,
         rgba(255, 255, 255, 0.35) 100%);
     background-size: 200% 200%;
     animation: holographic 3s ease infinite;
@@ -512,11 +510,9 @@
     0% {
       background-position: 0% 50%;
     }
-  
     50% {
       background-position: 100% 50%;
     }
-  
     100% {
       background-position: 0% 50%;
     }
@@ -527,9 +523,9 @@
   #login-btn:hover {
     background: linear-gradient(135deg,
         rgba(255, 255, 255, 0.5) 0%,
-        rgba(230, 240, 255, 0.4) 25%,
+        rgba(230, 255, 230, 0.4) 25%,
         rgba(255, 255, 255, 0.6) 50%,
-        rgba(230, 240, 255, 0.4) 75%,
+        rgba(230, 255, 230, 0.4) 75%,
         rgba(255, 255, 255, 0.5) 100%);
     background-size: 200% 200%;
     box-shadow:
@@ -562,9 +558,9 @@
   .btn-holografico-secundario:hover {
     background: linear-gradient(135deg,
         rgba(255, 255, 255, 0.5) 0%,
-        rgba(230, 240, 255, 0.4) 25%,
+        rgba(230, 255, 230, 0.4) 25%,
         rgba(255, 255, 255, 0.6) 50%,
-        rgba(230, 240, 255, 0.4) 75%,
+        rgba(230, 255, 230, 0.4) 75%,
         rgba(255, 255, 255, 0.5) 100%);
     background-size: 200% 200%;
     animation: holographic 3s ease infinite;
@@ -845,9 +841,9 @@
     background-size: 200% 200%;
     background-image: linear-gradient(135deg,
         rgba(255, 255, 255, 1) 0%,
-        rgba(200, 225, 255, 1) 25%,
+        rgba(200, 255, 200, 1) 25%,
         rgba(255, 255, 255, 1) 50%,
-        rgba(210, 235, 255, 1) 75%,
+        rgba(210, 255, 210, 1) 75%,
         rgba(255, 255, 255, 1) 100%);
     animation: holographic 3s ease infinite;
   }
@@ -885,7 +881,7 @@
     height: 4rem;
     margin-bottom: 1rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='15' y1='9' x2='9' y2='15'/%3E%3Cline x1='9' y1='9' x2='15' y2='15'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='15' y1='9' x2='9' y2='15'/%3E%3Cline x1='9' y1='9' x2='15' y2='15'/%3E%3C/svg%3E");
@@ -907,7 +903,7 @@
     height: 4rem;
     margin-bottom: 1rem;
     background-size: 200% 200%;
-    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,225,255,1) 25%, rgba(255,255,255,1) 50%, rgba(210,235,255,1) 75%, rgba(255,255,255,1) 100%);
+    background-image: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(200,255,200,1) 25%, rgba(255,255,255,1) 50%, rgba(210,255,210,1) 75%, rgba(255,255,255,1) 100%);
     animation: holographic 3s ease infinite;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E");
@@ -982,12 +978,10 @@
       opacity: 0.9;
       filter: brightness(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
     }
-  
     50% {
       opacity: 1;
       filter: brightness(1.2) drop-shadow(0 0 20px rgba(201, 201, 201, 0.8));
     }
-  
     100% {
       opacity: 0.9;
       filter: brightness(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
@@ -1316,8 +1310,6 @@
   /* =========================================
      NORMALIZACIÓN FINAL DE FORMULARIOS Y BOTONES
      ========================================= */
-  
-  /* Fondo y dimensiones comunes */
   #auth-form,
   #form-crear-usuario,
   #form-editar-usuario {
@@ -1335,7 +1327,6 @@
     box-sizing: border-box !important;
   }
   
-  /* Etiquetas */
   #form-crear-usuario label,
   #form-editar-usuario label {
     display: block !important;
@@ -1348,7 +1339,6 @@
     color: rgba(255, 255, 255, 0.9) !important;
   }
   
-  /* Campos de entrada y selects */
   #auth-form input,
   #auth-form input[type="email"],
   #auth-form input[type="password"],
@@ -1376,14 +1366,12 @@
     transition: 0.3s !important;
   }
   
-  /* Placeholder */
   #auth-form input::placeholder,
   #form-crear-usuario input::placeholder,
   #form-editar-usuario input::placeholder {
     color: rgba(255, 255, 255, 0.7) !important;
   }
   
-  /* Foco */
   #auth-form input:focus,
   #form-crear-usuario input:focus,
   #form-crear-usuario select:focus,
@@ -1415,178 +1403,18 @@
     margin-top: 0.5rem !important;
   }
   
-  /* Ajuste específico para cancelar: sin espacio inferior */
   #form-crear-usuario #cancelar-creacion {
     margin-bottom: 0 !important;
   }
   
-  /* Eliminar espacio extra del contenedor de botones */
   #form-crear-usuario div[style*="flex-direction:column"] {
     margin-bottom: 0 !important;
   }
-
+  
   /* =========================================
-   RECOMENDACIÓN CON BRILLO DORADO
-   ========================================= */
-.recomendacion-destacada {
-  background: linear-gradient(135deg,
-      rgba(250, 207, 41, 0.18) 0%,
-      rgba(255, 215, 97, 0.06) 50%,
-      rgba(250, 207, 41, 0.12) 100%);
-  padding: 1rem 1.2rem;
-  border-radius: 14px;
-  margin-bottom: 1.5rem;
-  border-left: 4px solid #facf29;
-  box-shadow:
-    0 0 20px rgba(250, 207, 41, 0.25),
-    inset 0 0 20px rgba(250, 207, 41, 0.08);
-}
-
-.recomendacion-destacada h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #facf29, #fff3b0, #facf29);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: holographic 3s ease infinite;
-  text-shadow: 0 0 12px rgba(250, 207, 41, 0.6);
-}
-
-.recomendacion-destacada p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: #fff;
-  text-shadow: 0 0 8px rgba(250, 207, 41, 0.4);
-}
-
-/* =========================================
-   REDUCIR ESPACIOS EN FORMULARIOS
-   ========================================= */
-
-/* Espacio entre usuario y contraseña (login) */
-#auth-form input {
-  margin-bottom: 0.6rem !important;
-}
-
-/* Espacio entre contraseña y botón login */
-#auth-form button[type="submit"] {
-  margin-top: 0.3rem !important;
-}
-
-/* Espacio entre Crear usuario y Cancelar */
-#form-crear-usuario button[type="submit"],
-#form-crear-usuario #cancelar-creacion {
-  margin-top: 0 !important;
-  margin-bottom: 0.3rem !important;
-}
-
-/* Reducir el gap del contenedor de botones */
-#form-crear-usuario div[style*="flex-direction:column"] {
-  gap: 0.3rem !important;
-}
-
-/* Opcional: también reducir espacio entre campos de crear y actualizar */
-#form-crear-usuario input,
-#form-crear-usuario select,
-#form-editar-usuario input,
-#form-editar-usuario select {
-  margin-bottom: 0.8rem !important;
-}
-
-/* =========================================
-   AJUSTES FINOS DE ESPACIADO
-   ========================================= */
-
-/* Reducir espacio entre usuario y contraseña (login) */
-#auth-form {
-  gap: 0.5rem !important;           /* reduce el gap general del formulario */
-}
-
-#auth-form input {
-  margin-bottom: 0 !important;      /* elimina el margen inferior extra */
-}
-
-/* Aumentar espacio entre último campo y botones en crear usuario */
-#form-crear-usuario div[style*="flex-direction:column"] {
-  margin-top: 1.5rem !important;    /* separa los botones del campo anterior */
-}
-
-/* (Opcional) Si quieres también separar los botones entre sí */
-#form-crear-usuario button[type="submit"],
-#form-crear-usuario #cancelar-creacion {
-  margin-bottom: 0.4rem !important; /* espacio entre botones */
-}
-
-/* =========================================
-   AJUSTE FINO DE ESPACIOS
-   ========================================= */
-
-/* Más espacio entre el campo de rol y los botones */
-#form-crear-usuario #rol-usuario {
-  margin-bottom: 2.5rem !important;
-}
-
-/* Menos espacio entre usuario y contraseña en login */
-#auth-form {
-  gap: 0.25rem !important;          /* reduce la separación general */
-}
-
-#auth-form input {
-  margin-bottom: 0 !important;      /* elimina márgenes extra */
-}
-
-/* Espacio más reducido entre contraseña y botón de login */
-#auth-form button[type="submit"] {
-  margin-top: 0.25rem !important;
-}
-
-/* =========================================
-   CORREGIR ESPACIO EN LOGIN (usuario/contraseña)
-   ========================================= */
-   #auth-form input[type="email"],
-   #auth-form input[type="password"] {
-     margin-bottom: 0.6rem !important;   /* espacio entre usuario y contraseña */
-   }
-   
-   #auth-form {
-     gap: 0.4rem !important;             /* espacio entre todos los elementos */
-   }
-   
-   #auth-form button[type="submit"] {
-     margin-top: 0.4rem !important;      /* espacio entre contraseña y botón */
-   }
-
-   /* =========================================
-   SIMULAR ZOOM DEL 90% EN ESCRITORIO
-   ========================================= */
-@media screen and (min-width: 1024px) {
-  body {
-    zoom: 0.95;
-  }
-}
-
-/* =========================================
-   ESPACIO ADICIONAL BAJO EL CAMPO DE ROL
-   ========================================= */
-   #form-editar-usuario #edit-rol {
-    margin-bottom: 2.3rem !important;   /* un poco más que el estándar 1.5rem */
-  }
-
-  /* =========================================
-   ESPACIO ENTRE BOTONES CREAR Y CANCELAR
-   ========================================= */
-#form-crear-usuario div[style*="flex-direction:column"] {
-  gap: 1rem !important;
-}
-
-/* =========================================
-   RECOMENDACIÓN CON BRILLO DORADO
-   ========================================= */
-   .recomendacion-destacada {
+     RECOMENDACIÓN CON BRILLO DORADO
+     ========================================= */
+  .recomendacion-destacada {
     background: linear-gradient(135deg,
         rgba(250, 207, 41, 0.18) 0%,
         rgba(255, 215, 97, 0.06) 50%,
@@ -1622,10 +1450,121 @@
   }
   
   /* =========================================
+     REDUCIR ESPACIOS EN FORMULARIOS
+     ========================================= */
+  #auth-form input {
+    margin-bottom: 0.6rem !important;
+  }
+  
+  #auth-form button[type="submit"] {
+    margin-top: 0.3rem !important;
+  }
+  
+  #form-crear-usuario button[type="submit"],
+  #form-crear-usuario #cancelar-creacion {
+    margin-top: 0 !important;
+    margin-bottom: 0.3rem !important;
+  }
+  
+  #form-crear-usuario div[style*="flex-direction:column"] {
+    gap: 0.3rem !important;
+  }
+  
+  #form-crear-usuario input,
+  #form-crear-usuario select,
+  #form-editar-usuario input,
+  #form-editar-usuario select {
+    margin-bottom: 0.8rem !important;
+  }
+  
+  /* =========================================
+     AJUSTES FINOS DE ESPACIADO
+     ========================================= */
+  #auth-form {
+    gap: 0.5rem !important;
+  }
+  
+  #auth-form input {
+    margin-bottom: 0 !important;
+  }
+  
+  #form-crear-usuario div[style*="flex-direction:column"] {
+    margin-top: 1.5rem !important;
+  }
+  
+  #form-crear-usuario button[type="submit"],
+  #form-crear-usuario #cancelar-creacion {
+    margin-bottom: 0.4rem !important;
+  }
+  
+  /* =========================================
+     AJUSTE FINO DE ESPACIOS
+     ========================================= */
+  #form-crear-usuario #rol-usuario {
+    margin-bottom: 2.5rem !important;
+  }
+  
+  #auth-form {
+    gap: 0.25rem !important;
+  }
+  
+  #auth-form input {
+    margin-bottom: 0 !important;
+  }
+  
+  #auth-form button[type="submit"] {
+    margin-top: 0.25rem !important;
+  }
+  
+  /* =========================================
+     CORREGIR ESPACIO EN LOGIN (usuario/contraseña)
+     ========================================= */
+  #auth-form input[type="email"],
+  #auth-form input[type="password"] {
+    margin-bottom: 0.6rem !important;
+  }
+  
+  #auth-form {
+    gap: 0.4rem !important;
+  }
+  
+  #auth-form button[type="submit"] {
+    margin-top: 0.4rem !important;
+  }
+  
+  /* =========================================
+     SIMULAR ZOOM DEL 95% EN ESCRITORIO
+     ========================================= */
+  @media screen and (min-width: 1024px) {
+    body {
+      zoom: 0.95;
+    }
+  }
+  
+  /* =========================================
+     ESPACIO ADICIONAL BAJO EL CAMPO DE ROL
+     ========================================= */
+  #form-editar-usuario #edit-rol {
+    margin-bottom: 2.3rem !important;
+  }
+  
+  /* =========================================
+     ESPACIO ENTRE BOTONES CREAR Y CANCELAR
+     ========================================= */
+  #form-crear-usuario div[style*="flex-direction:column"] {
+    gap: 1rem !important;
+  }
+  
+  /* =========================================
      MÁS ESPACIO ENTRE PREGUNTA Y OPCIONES EN GUÍAS
      ========================================= */
   .formulario-nom035 .pregunta-item p {
-    margin-bottom: 0.6rem !important;  /* antes 0.3rem */
+    margin-bottom: 0.6rem !important;
+  }
+  
+  /* Asegura que los encabezados de tablas en Gráficas sean blancos */
+  #form-container th {
+    color: #ffffff !important;
   }
   
   /* =========================================

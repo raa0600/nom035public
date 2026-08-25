@@ -492,6 +492,78 @@ const deleteEvaluacion = async (req, res, next) => {
     }
 };
 
+const getDatosGraficas = async (req, res, next) => {
+    try {
+        const pool = getPool();
+
+        // Distribución de niveles de riesgo global
+        const nivelesGlobal = await pool.request().query(`
+            SELECT rg.resultado_final, COUNT(*) AS total
+            FROM RESULTADO_GLOBAL rg
+            JOIN EVALUACION e ON rg.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            GROUP BY rg.resultado_final
+        `);
+
+        // Top 10 categorías por promedio de puntaje porcentual
+        const topCategorias = await pool.request().query(`
+            SELECT TOP 10 c.nombre AS nombre, AVG(rc.puntaje_porcentaje) AS promedio
+            FROM RESULTADO_CATEGORIA rc
+            JOIN CATEGORIA c ON rc.id_categoria = c.id_categoria
+            JOIN EVALUACION e ON rc.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            GROUP BY c.nombre
+            ORDER BY promedio DESC
+        `);
+
+        // Top 10 dominios por promedio de puntaje porcentual
+        const topDominios = await pool.request().query(`
+            SELECT TOP 10 d.nombre AS nombre, AVG(rd.puntaje_porcentaje) AS promedio
+            FROM RESULTADO_DOMINIO rd
+            JOIN DOMINIO d ON rd.id_dominio = d.id_dominio
+            JOIN EVALUACION e ON rd.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            GROUP BY d.nombre
+            ORDER BY promedio DESC
+        `);
+
+        // Reportes completados ordenados por riesgo (alto a bajo)
+        const reportes = await pool.request().query(`
+            SELECT TOP 20 e.id_evaluacion, emp.nombre, rg.puntaje_bruto, rg.resultado_final
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            JOIN RESULTADO_GLOBAL rg ON rg.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            ORDER BY CASE rg.resultado_final
+                WHEN 'Muy Alto' THEN 1
+                WHEN 'Alto' THEN 2
+                WHEN 'Medio' THEN 3
+                WHEN 'Bajo' THEN 4
+                ELSE 5
+            END, rg.puntaje_bruto DESC
+        `);
+
+        // Canalizaciones ordenadas por fecha (más recientes primero)
+        const canalizaciones = await pool.request().query(`
+            SELECT TOP 20 e.id_evaluacion, emp.nombre, e.fecha_aplicacion
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            WHERE e.estatus = 'Canalizacion_requerida'
+            ORDER BY e.fecha_aplicacion DESC
+        `);
+
+        res.json({
+            nivelesGlobal: nivelesGlobal.recordset,
+            topCategorias: topCategorias.recordset,
+            topDominios: topDominios.recordset,
+            reportes: reportes.recordset,
+            canalizaciones: canalizaciones.recordset
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getPreguntasGuiaI,
     guardarGuiaI,
@@ -507,5 +579,6 @@ module.exports = {
     getProgresoEvaluacion,
     pausarEvaluacion,
     getEvaluacionesCompletadas,
-    getEstadoActual
+    getEstadoActual,
+    getDatosGraficas
 };

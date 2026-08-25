@@ -58,6 +58,7 @@ function showApp() {
     const reportCard = document.querySelector('.card[data-type="reportes"]');
     const usuariosCard = document.querySelector('.card[data-type="usuarios"]');
     const canalizacionCard = document.querySelector('.card[data-type="canalizacion"]');
+    const graficasCard = document.querySelector('.card[data-type="graficas"]');
 
     if (isAdmin || isEmpleado) {
         if (nuevaCard) nuevaCard.style.display = 'flex';
@@ -69,8 +70,10 @@ function showApp() {
 
     if (isAdmin || isSupervisor) {
         if (reportCard) reportCard.style.display = 'flex';
+        if (graficasCard) graficasCard.style.display = 'flex';
     } else {
         if (reportCard) reportCard.style.display = 'none';
+        if (graficasCard) graficasCard.style.display = 'none';
     }
 
     if (isAdmin || isSupervisor) {
@@ -123,7 +126,7 @@ typeSelection.addEventListener('click', (e) => {
             return;
         }
     }
-    if (type === 'reportes' || type === 'canalizacion') {
+    if (type === 'reportes' || type === 'canalizacion' || type === 'graficas') {
         if (userRol !== '1' && userRol !== '2') {
             alert('❌ No tienes permiso para ver esta sección.');
             return;
@@ -144,6 +147,8 @@ typeSelection.addEventListener('click', (e) => {
         continuarEvaluacion();
     } else if (type === 'reportes') {
         mostrarReportes();
+    } else if (type === 'graficas') {
+        mostrarGraficas();
     } else if (type === 'usuarios') {
         mostrarGestionUsuarios();
     } else if (type === 'canalizacion') {
@@ -1091,7 +1096,6 @@ async function cargarGuiaIII(idEvaluacion) {
         formContainer.classList.remove('hidden');
         document.getElementById('back-btn-guia-iii').addEventListener('click', goBack);
 
-        // Guardado automático al cambiar cualquier radio de pregunta
         document.querySelectorAll('#form-guia-iii input[type="radio"]').forEach(input => {
             input.addEventListener('change', async (e) => {
                 if (e.target.name.startsWith('pregunta_')) {
@@ -1102,7 +1106,6 @@ async function cargarGuiaIII(idEvaluacion) {
             });
         });
 
-        // Listener para filtro de clientes
         document.querySelectorAll('input[name="filtro_clientes"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const mostrar = e.target.value === '1';
@@ -1115,7 +1118,6 @@ async function cargarGuiaIII(idEvaluacion) {
             });
         });
 
-        // Listener para filtro de jefes
         document.querySelectorAll('input[name="filtro_jefe"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const mostrar = e.target.value === '1';
@@ -1128,7 +1130,6 @@ async function cargarGuiaIII(idEvaluacion) {
             });
         });
 
-        // Botón guardar y salir
         document.getElementById('btn-guardar-salir').addEventListener('click', async () => {
             try {
                 const resPausa = await fetch(`/api/evaluacion/${idEvaluacion}/pausar`, {
@@ -1149,7 +1150,6 @@ async function cargarGuiaIII(idEvaluacion) {
             }
         });
 
-        // Submit final
         document.getElementById('form-guia-iii').addEventListener('submit', async (e) => {
             e.preventDefault();
             await finalizarEvaluacion(idEvaluacion);
@@ -1368,6 +1368,147 @@ function obtenerRecomendacion(nivel) {
     }
 }
 
+// ============================================================
+// GRÁFICAS Y ESTADÍSTICAS
+// ============================================================
+async function mostrarGraficas() {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/evaluacion/graficas/datos', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al cargar datos');
+
+        let html = `
+            <button type="button" class="back-btn" id="back-btn-graficas">← Atrás</button>
+            <div style="color:white; padding:1rem;">
+                <h2 class="form-title" style="display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                    <span class="icono-reportes"></span>
+                    Gráficas y Estadísticas
+                </h2>
+
+                <!-- Gráfica de pastel -->
+                <div style="background:rgba(255,255,255,0.1); padding:1rem; border-radius:12px; margin-bottom:1.5rem;">
+                    <h3 style="text-align:center; margin-bottom:1rem;">Distribución de Niveles de Riesgo Global</h3>
+                    <canvas id="grafica-niveles" style="max-height:300px; width:100%;"></canvas>
+                </div>
+
+                <!-- Top 10 Categorías -->
+                <h3>Top 10 Categorías por Riesgo Promedio</h3>
+                <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1.5rem;">
+                    <tr>
+                        <th style="color:#fff;">#</th>
+                        <th style="color:#fff;">Categoría</th>
+                        <th style="color:#fff; text-align:center;">Promedio (%)</th>
+                    </tr>
+                    ${data.topCategorias.map((c, i) => `
+                        <tr>
+                            <td style="text-align:center;">${i+1}</td>
+                            <td>${c.nombre}</td>
+                            <td style="text-align:center;">${c.promedio.toFixed(1)}%</td>
+                        </tr>
+                    `).join('')}
+                </table>
+
+                <!-- Top 10 Dominios -->
+                <h3>Top 10 Dominios por Riesgo Promedio</h3>
+                <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1.5rem;">
+                    <tr>
+                        <th style="color:#fff;">#</th>
+                        <th style="color:#fff;">Dominio</th>
+                        <th style="color:#fff; text-align:center;">Promedio (%)</th>
+                    </tr>
+                    ${data.topDominios.map((d, i) => `
+                        <tr>
+                            <td style="text-align:center;">${i+1}</td>
+                            <td>${d.nombre}</td>
+                            <td style="text-align:center;">${d.promedio.toFixed(1)}%</td>
+                        </tr>
+                    `).join('')}
+                </table>
+
+                <!-- Reportes por riesgo -->
+                <h3>Reportes Recientes (Ordenados por Riesgo)</h3>
+                <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1.5rem;">
+                    <tr>
+                        <th style="color:#fff;">ID</th>
+                        <th style="color:#fff;">Empleado</th>
+                        <th style="color:#fff; text-align:center;">Puntaje</th>
+                        <th style="color:#fff; text-align:center;">Riesgo</th>
+                    </tr>
+                    ${data.reportes.map(r => `
+                        <tr>
+                            <td>${r.id_evaluacion}</td>
+                            <td>${r.nombre}</td>
+                            <td style="text-align:center;">${r.puntaje_bruto}</td>
+                            <td style="text-align:center;">${r.resultado_final}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+
+                <!-- Canalizaciones -->
+                <h3>Canalizaciones Recientes</h3>
+                <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px;">
+                    <tr>
+                        <th style="color:#fff;">ID</th>
+                        <th style="color:#fff;">Empleado</th>
+                        <th style="color:#fff;">Fecha</th>
+                    </tr>
+                    ${data.canalizaciones.map(c => `
+                        <tr>
+                            <td>${c.id_evaluacion}</td>
+                            <td>${c.nombre}</td>
+                            <td>${new Date(c.fecha_aplicacion).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            </div>
+        `;
+
+        formContainer.innerHTML = html;
+        formContainer.classList.remove('hidden');
+        reportContainer.classList.add('hidden');
+        document.getElementById('back-btn-graficas').addEventListener('click', goBack);
+
+        // Dibujar gráfica de pastel con leyenda blanca
+        if (data.nivelesGlobal.length > 0) {
+            const ctx = document.getElementById('grafica-niveles').getContext('2d');
+            const labels = data.nivelesGlobal.map(n => n.resultado_final);
+            const valores = data.nivelesGlobal.map(n => n.total);
+            const colores = ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff'];
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: colores
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'   // Texto de leyenda en blanco
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('grafica-niveles').parentElement.innerHTML =
+                '<p style="text-align:center;">No hay evaluaciones completadas aún.</p>';
+        }
+
+    } catch (err) {
+        alert('❌ ' + err.message);
+    }
+}
+
 // ---------- NAVEGACIÓN COMÚN ----------
 function goBack() {
     formContainer.classList.add('hidden');
@@ -1394,4 +1535,6 @@ document.addEventListener('DOMContentLoaded', () => {
         "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E\")";
     document.querySelector('.card[data-type="canalizacion"] .card-icon').style.webkitMaskImage =
         "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E\")";
+    document.querySelector('.card[data-type="graficas"] .card-icon').style.webkitMaskImage =
+        "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E\")";
 });
