@@ -31,10 +31,30 @@ const getPerfil = async (req, res, next) => {
 };
 
 // ---------- CREAR USUARIO (con empleado automático) ----------
+// ---------- CREAR USUARIO (con empleado automático) ----------
 const createUsuario = async (req, res, next) => {
     try {
-        const { nombre, email, password, departamento, id_rol } = req.body;
+        const {
+            nombre,
+            email,
+            password,
+            departamento,
+            id_rol,
+            sexo = null,
+            edad = null,
+            estado_civil = null,
+            nivel_estudios = null,
+            ocupacion_profesion_puesto = null,
+            tipo_puesto = null,
+            tipo_contratacion = null,
+            tipo_personal = null,
+            tipo_jornada = null,
+            rotacion_turno = null,
+            tiempo_exp_puesto = null,
+            tiempo_exp_laboral = null
+        } = req.body;
 
+        // Validaciones básicas
         if (!nombre || !email || !password) {
             return res.status(400).json({ error: 'Nombre, email y contraseña son requeridos' });
         }
@@ -61,14 +81,38 @@ const createUsuario = async (req, res, next) => {
             `);
         const id_usuario = resultUser.recordset[0].id;
 
-        // 2. Insertar en EMPLEADO
+        // 2. Insertar en EMPLEADO con todos los campos
         const resultEmpleado = await pool.request()
             .input('nombre', sql.NVarChar, nombre)
             .input('email', sql.NVarChar, email)
             .input('departamento', sql.NVarChar, departamento || null)
+            .input('sexo', sql.NVarChar, sexo)
+            .input('edad', sql.Int, edad)
+            .input('estado_civil', sql.NVarChar, estado_civil)
+            .input('nivel_estudios', sql.NVarChar, nivel_estudios)
+            .input('ocupacion', sql.NVarChar, ocupacion_profesion_puesto)
+            .input('tipo_puesto', sql.NVarChar, tipo_puesto)
+            .input('tipo_contratacion', sql.NVarChar, tipo_contratacion)
+            .input('tipo_personal', sql.NVarChar, tipo_personal)
+            .input('tipo_jornada', sql.NVarChar, tipo_jornada)
+            .input('rotacion', sql.Bit, rotacion_turno)
+            .input('exp_puesto', sql.Int, tiempo_exp_puesto)
+            .input('exp_laboral', sql.Int, tiempo_exp_laboral)
             .query(`
-                INSERT INTO EMPLEADO (nombre, email, departamento_seccion_area)
-                VALUES (@nombre, @email, @departamento);
+                INSERT INTO EMPLEADO (
+                    nombre, email, departamento_seccion_area,
+                    sexo, edad, estado_civil, nivel_estudios,
+                    ocupacion_profesion_puesto, tipo_puesto, tipo_contratacion,
+                    tipo_personal, tipo_jornada, rotacion_turno,
+                    tiempo_exp_puesto, tiempo_exp_laboral
+                )
+                VALUES (
+                    @nombre, @email, @departamento,
+                    @sexo, @edad, @estado_civil, @nivel_estudios,
+                    @ocupacion, @tipo_puesto, @tipo_contratacion,
+                    @tipo_personal, @tipo_jornada, @rotacion,
+                    @exp_puesto, @exp_laboral
+                );
                 SELECT SCOPE_IDENTITY() AS id;
             `);
         const id_empleado = resultEmpleado.recordset[0].id;
@@ -79,7 +123,7 @@ const createUsuario = async (req, res, next) => {
             .input('id_empleado', sql.Int, id_empleado)
             .query('UPDATE USUARIO SET id_empleado = @id_empleado WHERE id_usuario = @id_usuario');
 
-        // 4. Obtener usuario completo
+        // 4. Obtener usuario completo (sin contraseña)
         const newUser = await usuarioModel.findById(id_usuario);
         const { contraseña_hash, ...rest } = newUser;
         res.status(201).json(rest);

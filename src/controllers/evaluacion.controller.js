@@ -529,7 +529,7 @@ const getDatosGraficas = async (req, res, next) => {
 
         // Reportes completados ordenados por riesgo (alto a bajo)
         const reportes = await pool.request().query(`
-            SELECT TOP 20 e.id_evaluacion, emp.nombre, rg.puntaje_bruto, rg.resultado_final
+            SELECT e.id_evaluacion, emp.nombre, rg.puntaje_bruto, rg.resultado_final
             FROM EVALUACION e
             JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
             JOIN RESULTADO_GLOBAL rg ON rg.id_evaluacion = e.id_evaluacion
@@ -540,12 +540,12 @@ const getDatosGraficas = async (req, res, next) => {
                 WHEN 'Medio' THEN 3
                 WHEN 'Bajo' THEN 4
                 ELSE 5
-            END, rg.puntaje_bruto DESC
+            END, rg.puntaje_bruto DESC, e.fecha_aplicacion DESC
         `);
 
         // Canalizaciones ordenadas por fecha (más recientes primero)
         const canalizaciones = await pool.request().query(`
-            SELECT TOP 20 e.id_evaluacion, emp.nombre, e.fecha_aplicacion
+            SELECT e.id_evaluacion, emp.nombre, e.fecha_aplicacion
             FROM EVALUACION e
             JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
             WHERE e.estatus = 'Canalizacion_requerida'

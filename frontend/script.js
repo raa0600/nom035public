@@ -301,6 +301,57 @@ function mostrarModalExito(titulo, mensaje, callback, botonTexto = 'Aceptar') {
 }
 
 // ============================================================
+// MODAL PARA PREGUNTAS FALTANTES
+// ============================================================
+function mostrarModalFaltantes(mensaje) {
+    const previo = document.getElementById('modal-faltantes');
+    if (previo) previo.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-faltantes';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    modal.innerHTML = `
+        <div style="background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            color: #fff;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff; margin-bottom:1rem;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <h2 style="margin:0 0 0.5rem; font-size:1.5rem;">Preguntas faltantes</h2>
+            <p style="margin-bottom:1.5rem; opacity:0.9;">${mensaje}</p>
+            <button id="modal-faltantes-cerrar" style="background: rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); border-radius:30px; color:#fff; padding:0.6rem 1.5rem; cursor:pointer; transition:0.3s; font-family:'Inter', sans-serif; font-size:1rem;">Aceptar</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('modal-faltantes-cerrar').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+// ============================================================
+// GESTIÓN DE USUARIOS (CRUD completo + reset password)
+// ============================================================
+// ============================================================
 // GESTIÓN DE USUARIOS (CRUD completo + reset password)
 // ============================================================
 async function mostrarGestionUsuarios() {
@@ -365,7 +416,7 @@ async function mostrarGestionUsuarios() {
             </div>
 
             <div id="form-creacion-container" style="display:none; margin-top:1.5rem;">
-                <form id="form-crear-usuario" style="max-width:420px; margin:0 auto; padding:1rem 0;">
+                <form id="form-crear-usuario" style="max-width:520px; margin:0 auto; padding:1rem 0;">
                     <label>Nombre completo</label>
                     <input type="text" id="nombre-usuario" class="campo-gestion" placeholder="Ej. Juan Pérez" required>
 
@@ -377,6 +428,88 @@ async function mostrarGestionUsuarios() {
 
                     <label>Departamento</label>
                     <input type="text" id="departamento-usuario" class="campo-gestion" placeholder="Ej. Sistemas, RH, Operaciones">
+
+                    <label>Sexo</label>
+                    <select id="sexo-usuario" class="campo-gestion">
+                        <option value="">Seleccione...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+
+                    <label>Edad</label>
+                    <input type="number" id="edad-usuario" class="campo-gestion" placeholder="Ej. 30" min="15" max="100">
+
+                    <label>Estado civil</label>
+                    <select id="estado-civil-usuario" class="campo-gestion">
+                        <option value="">Seleccione...</option>
+                        <option value="Soltero">Soltero</option>
+                        <option value="Casado">Casado</option>
+                        <option value="Unión libre">Unión libre</option>
+                        <option value="Divorciado">Divorciado</option>
+                        <option value="Viudo">Viudo</option>
+                    </select>
+
+                    <label>Nivel de estudios</label>
+                    <select id="nivel-estudios-usuario" class="campo-gestion">
+                        <option value="">Seleccione...</option>
+                        <option value="Primaria">Primaria</option>
+                        <option value="Secundaria">Secundaria</option>
+                        <option value="Preparatoria">Preparatoria</option>
+                        <option value="Técnico">Técnico</option>
+                        <option value="Licenciatura">Licenciatura</option>
+                        <option value="Posgrado">Posgrado</option>
+                    </select>
+
+                    <label>Ocupación / Profesión / Puesto</label>
+                    <input type="text" id="ocupacion-usuario" class="campo-gestion" placeholder="Ej. Ingeniero de Software">
+
+                    <label>Tipo de puesto</label>
+                    <select id="tipo-puesto-usuario" class="campo-gestion">
+                        <option value="">Seleccione...</option>
+                        <option value="Operativo">Operativo</option>
+                        <option value="Administrativo">Administrativo</option>
+                        <option value="Supervisión">Supervisión</option>
+                        <option value="Gerencial">Gerencial</option>
+                        <option value="Directivo">Directivo</option>
+                    </select>
+
+                    <label>Tipo de contratación</label>
+                    <select id="tipo-contratacion-usuario" class="campo-gestion">
+                        <option value="">Seleccione...</option>
+                        <option value="Base">Base</option>
+                        <option value="Confianza">Confianza</option>
+                        <option value="Honorarios">Honorarios</option>
+                        <option value="Prácticas">Prácticas</option>
+                    </select>
+
+                    <label>Tipo de personal</label>
+                    <select id="tipo-personal-usuario" class="campo-gestion">
+                        <option value="">Seleccione...</option>
+                        <option value="Interno">Interno</option>
+                        <option value="Externo / Outsourcing">Externo / Outsourcing</option>
+                    </select>
+
+                    <label>Tipo de jornada</label>
+                    <select id="tipo-jornada-usuario" class="campo-gestion">
+                        <option value="">Seleccione...</option>
+                        <option value="Tiempo completo">Tiempo completo</option>
+                        <option value="Medio tiempo">Medio tiempo</option>
+                        <option value="Por horas">Por horas</option>
+                        <option value="Turnos rotativos">Turnos rotativos</option>
+                    </select>
+
+                    <label>¿Tiene rotación de turno?</label>
+                    <select id="rotacion-turno-usuario" class="campo-gestion">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+
+                    <label>Tiempo de experiencia en el puesto (años)</label>
+                    <input type="number" id="tiempo-puesto-usuario" class="campo-gestion" placeholder="Ej. 2" min="0" max="60">
+
+                    <label>Tiempo de experiencia laboral total (años)</label>
+                    <input type="number" id="tiempo-laboral-usuario" class="campo-gestion" placeholder="Ej. 5" min="0" max="60">
 
                     <label>Rol</label>
                     <select id="rol-usuario" class="campo-gestion">
@@ -410,13 +543,31 @@ async function mostrarGestionUsuarios() {
         ocultarFormularioCreacion();
     });
 
+    // ============================================================
+    // MANEJADOR DE ENVÍO DEL FORMULARIO DE CREACIÓN
+    // ============================================================
     document.getElementById('form-crear-usuario')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Capturar todos los campos
         const nombre = document.getElementById('nombre-usuario').value.trim();
         const email = document.getElementById('email-usuario').value.trim();
         const password = document.getElementById('password-usuario').value.trim();
         const departamento = document.getElementById('departamento-usuario').value.trim();
         const id_rol = parseInt(document.getElementById('rol-usuario').value);
+
+        const sexo = document.getElementById('sexo-usuario').value;
+        const edad = parseInt(document.getElementById('edad-usuario').value || '0') || null;
+        const estado_civil = document.getElementById('estado-civil-usuario').value;
+        const nivel_estudios = document.getElementById('nivel-estudios-usuario').value;
+        const ocupacion_profesion_puesto = document.getElementById('ocupacion-usuario').value.trim();
+        const tipo_puesto = document.getElementById('tipo-puesto-usuario').value;
+        const tipo_contratacion = document.getElementById('tipo-contratacion-usuario').value;
+        const tipo_personal = document.getElementById('tipo-personal-usuario').value;
+        const tipo_jornada = document.getElementById('tipo-jornada-usuario').value;
+        const rotacion_turno = document.getElementById('rotacion-turno-usuario').value === '1';
+        const tiempo_exp_puesto = parseInt(document.getElementById('tiempo-puesto-usuario').value || '0') || null;
+        const tiempo_exp_laboral = parseInt(document.getElementById('tiempo-laboral-usuario').value || '0') || null;
 
         const mensajeDiv = document.getElementById('mensaje-creacion');
         mensajeDiv.innerHTML = `<p class="mensaje-estado" style="color:#facf29;">
@@ -430,7 +581,25 @@ async function mostrarGestionUsuarios() {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({ nombre, email, password, departamento, id_rol })
+                body: JSON.stringify({
+                    nombre,
+                    email,
+                    password,
+                    departamento,
+                    id_rol,
+                    sexo,
+                    edad,
+                    estado_civil,
+                    nivel_estudios,
+                    ocupacion_profesion_puesto,
+                    tipo_puesto,
+                    tipo_contratacion,
+                    tipo_personal,
+                    tipo_jornada,
+                    rotacion_turno,
+                    tiempo_exp_puesto,
+                    tiempo_exp_laboral
+                })
             });
             const data = await res.json();
 
@@ -445,19 +614,18 @@ async function mostrarGestionUsuarios() {
                     Usuario creado exitosamente.
                 </p>
             `;
-            document.getElementById('nombre-usuario').value = '';
-            document.getElementById('email-usuario').value = '';
-            document.getElementById('password-usuario').value = '';
-            document.getElementById('departamento-usuario').value = '';
+            // Limpiar formulario
+            document.getElementById('form-crear-usuario').reset();
             setTimeout(() => {
                 ocultarFormularioCreacion();
-                mostrarGestionUsuarios();
+                mostrarGestionUsuarios(); // Recargar lista
             }, 1500);
         } catch (err) {
             mensajeDiv.innerHTML = `<p style="color:#FF6B6B;">❌ Error de conexión: ${err.message}</p>`;
         }
     });
 
+    // ... (resto de listeners para editar, reset, eliminar permanecen igual)
     document.querySelectorAll('.editar-usuario').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.dataset.id;
@@ -865,11 +1033,33 @@ function mostrarGuiaI(idEvaluacion, secciones) {
                 <p style="margin-bottom:1.5rem; font-size:0.9rem; opacity:0.8; text-align:center;">
                     Responda las siguientes preguntas con <strong>Sí</strong> o <strong>No</strong>.
                 </p>
+
+                <!-- Sección I siempre visible -->
+                <h3 style="margin-top:0.5rem; margin-bottom:0.5rem; font-size:1.1rem; color:rgba(255,255,255,0.9); padding-left:0.5rem;">${nombresSecciones.I}</h3>
     `;
 
-    for (const [seccion, preguntas] of Object.entries(secciones)) {
+    secciones.I.forEach(p => {
+        html += `
+            <div class="pregunta-item">
+                <p style="margin:0 0 0.3rem 0; font-size:0.95rem;">${p.texto}</p>
+                <div class="opciones-label">
+                    <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                        <input type="radio" name="pregunta_${p.id_pregunta_guia_i}" value="1" required> Sí
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                        <input type="radio" name="pregunta_${p.id_pregunta_guia_i}" value="0" required> No
+                    </label>
+                </div>
+            </div>
+        `;
+    });
+
+    // Contenedor para secciones condicionales (II, III, IV)
+    html += `<div id="secciones-condicionales" style="display:none;">`;
+
+    ['II', 'III', 'IV'].forEach(seccion => {
         html += `<h3 style="margin-top:1.5rem; margin-bottom:0.5rem; font-size:1.1rem; color:rgba(255,255,255,0.9); padding-left:0.5rem;">${nombresSecciones[seccion]}</h3>`;
-        preguntas.forEach(p => {
+        secciones[seccion].forEach(p => {
             html += `
                 <div class="pregunta-item">
                     <p style="margin:0 0 0.3rem 0; font-size:0.95rem;">${p.texto}</p>
@@ -884,14 +1074,18 @@ function mostrarGuiaI(idEvaluacion, secciones) {
                 </div>
             `;
         });
-    }
+    });
 
     html += `
-                <div class="botones-guia-iii">
-                    <button type="submit" class="btn-holografico">Enviar respuestas</button>
-                </div>
-            </form>
         </div>
+
+        <!-- Botones -->
+        <div class="botones-guia-iii" style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <button type="button" id="btn-continuar-guia-i" class="btn-holografico">Continuar</button>
+            <button type="button" id="btn-enviar-guia-i" class="btn-holografico" style="display:none;">Enviar respuestas</button>
+        </div>
+    </form>
+    </div>
     `;
 
     formContainer.innerHTML = html;
@@ -899,16 +1093,57 @@ function mostrarGuiaI(idEvaluacion, secciones) {
     formContainer.classList.remove('hidden');
     reportContainer.classList.add('hidden');
 
-    document.getElementById('form-guia-i').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
+    const obtenerRespuestas = () => {
         const respuestas = [];
-        for (const [key, value] of formData.entries()) {
-            const id_pregunta = parseInt(key.split('_')[1]);
-            respuestas.push({ id_pregunta, respuesta: value === '1' });
+        document.querySelectorAll('#form-guia-i input[type="radio"]:checked').forEach(radio => {
+            const id_pregunta = parseInt(radio.name.split('_')[1]);
+            respuestas.push({
+                id_pregunta,
+                respuesta: radio.value === '1'
+            });
+        });
+        return respuestas;
+    };
+
+    const validarSeccion = (numeros) => {
+        for (const num of numeros) {
+            const contestada = document.querySelector(`input[name="pregunta_${num}"]:checked`);
+            if (!contestada) return false;
         }
-        await guardarGuiaI(idEvaluacion, respuestas);
+        return true;
+    };
+
+    document.getElementById('btn-continuar-guia-i').addEventListener('click', async () => {
+        if (!validarSeccion([1,2,3,4,5,6])) {
+            mostrarModalFaltantes('Debes contestar todas las preguntas de la Sección I antes de continuar.');
+            return;
+        }
+
+        const radiosSeccionI = document.querySelectorAll('input[name^="pregunta_"]:checked');
+        let algunaSi = false;
+        radiosSeccionI.forEach(radio => {
+            const id = parseInt(radio.name.split('_')[1]);
+            if (id >= 1 && id <= 6 && radio.value === '1') {
+                algunaSi = true;
+            }
+        });
+
+        if (!algunaSi) {
+            await guardarGuiaI(idEvaluacion, obtenerRespuestas());
+        } else {
+            document.getElementById('secciones-condicionales').style.display = 'block';
+            document.getElementById('btn-continuar-guia-i').style.display = 'none';
+            document.getElementById('btn-enviar-guia-i').style.display = 'block';
+        }
+    });
+
+    document.getElementById('btn-enviar-guia-i').addEventListener('click', async () => {
+        const numerosTodas = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+        if (!validarSeccion(numerosTodas)) {
+            mostrarModalFaltantes('Debes contestar todas las preguntas de las Secciones I, II, III y IV.');
+            return;
+        }
+        await guardarGuiaI(idEvaluacion, obtenerRespuestas());
     });
 }
 
@@ -1152,6 +1387,35 @@ async function cargarGuiaIII(idEvaluacion) {
 
         document.getElementById('form-guia-iii').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const faltantes = [];
+
+            for (let num = 1; num <= 64; num++) {
+                const contestada = document.querySelector(`input[name="pregunta_${num}"]:checked`);
+                if (!contestada) faltantes.push(num);
+            }
+
+            const filtroClientes = document.querySelector('input[name="filtro_clientes"]:checked');
+            if (filtroClientes && filtroClientes.value === '1') {
+                for (let num = 65; num <= 68; num++) {
+                    const contestada = document.querySelector(`input[name="pregunta_${num}"]:checked`);
+                    if (!contestada) faltantes.push(num);
+                }
+            }
+
+            const filtroJefes = document.querySelector('input[name="filtro_jefe"]:checked');
+            if (filtroJefes && filtroJefes.value === '1') {
+                for (let num = 69; num <= 72; num++) {
+                    const contestada = document.querySelector(`input[name="pregunta_${num}"]:checked`);
+                    if (!contestada) faltantes.push(num);
+                }
+            }
+
+            if (faltantes.length > 0) {
+                mostrarModalFaltantes(`Faltan las siguientes preguntas por responder: ${faltantes.join(', ')}`);
+                return;
+            }
+
             await finalizarEvaluacion(idEvaluacion);
         });
 
@@ -1371,6 +1635,9 @@ function obtenerRecomendacion(nivel) {
 // ============================================================
 // GRÁFICAS Y ESTADÍSTICAS
 // ============================================================
+// ============================================================
+// GRÁFICAS Y ESTADÍSTICAS
+// ============================================================
 async function mostrarGraficas() {
     const token = localStorage.getItem('token');
     try {
@@ -1379,6 +1646,15 @@ async function mostrarGraficas() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al cargar datos');
+
+        // Mapeo de colores por nivel (usado en gráfica y tablas)
+        const colorPorNivel = {
+            'Muy Alto': 'rgba(255, 0, 0, 0.8)',   // rojo
+            'Alto': 'rgba(255, 165, 0, 0.8)',    // naranja
+            'Medio': 'rgba(255, 255, 0, 0.8)',   // amarillo
+            'Bajo': 'rgba(0, 128, 0, 0.8)',      // verde
+            'Nulo': 'rgba(135, 206, 235, 0.8)'   // azul cielo
+        };
 
         let html = `
             <button type="button" class="back-btn" id="back-btn-graficas">← Atrás</button>
@@ -1397,11 +1673,7 @@ async function mostrarGraficas() {
                 <!-- Top 10 Categorías -->
                 <h3>Top 10 Categorías por Riesgo Promedio</h3>
                 <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1.5rem;">
-                    <tr>
-                        <th style="color:#fff;">#</th>
-                        <th style="color:#fff;">Categoría</th>
-                        <th style="color:#fff; text-align:center;">Promedio (%)</th>
-                    </tr>
+                    <tr><th style="color:#fff;">#</th><th style="color:#fff;">Categoría</th><th style="color:#fff; text-align:center;">Promedio (%)</th></tr>
                     ${data.topCategorias.map((c, i) => `
                         <tr>
                             <td style="text-align:center;">${i+1}</td>
@@ -1414,11 +1686,7 @@ async function mostrarGraficas() {
                 <!-- Top 10 Dominios -->
                 <h3>Top 10 Dominios por Riesgo Promedio</h3>
                 <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1.5rem;">
-                    <tr>
-                        <th style="color:#fff;">#</th>
-                        <th style="color:#fff;">Dominio</th>
-                        <th style="color:#fff; text-align:center;">Promedio (%)</th>
-                    </tr>
+                    <tr><th style="color:#fff;">#</th><th style="color:#fff;">Dominio</th><th style="color:#fff; text-align:center;">Promedio (%)</th></tr>
                     ${data.topDominios.map((d, i) => `
                         <tr>
                             <td style="text-align:center;">${i+1}</td>
@@ -1431,14 +1699,9 @@ async function mostrarGraficas() {
                 <!-- Reportes por riesgo -->
                 <h3>Reportes Recientes (Ordenados por Riesgo)</h3>
                 <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px; margin-bottom:1.5rem;">
-                    <tr>
-                        <th style="color:#fff;">ID</th>
-                        <th style="color:#fff;">Empleado</th>
-                        <th style="color:#fff; text-align:center;">Puntaje</th>
-                        <th style="color:#fff; text-align:center;">Riesgo</th>
-                    </tr>
+                    <tr><th style="color:#fff;">ID</th><th style="color:#fff;">Empleado</th><th style="color:#fff; text-align:center;">Puntaje</th><th style="color:#fff; text-align:center;">Riesgo</th></tr>
                     ${data.reportes.map(r => `
-                        <tr>
+                        <tr style="background-color: ${colorPorNivel[r.resultado_final] || 'transparent'};">
                             <td>${r.id_evaluacion}</td>
                             <td>${r.nombre}</td>
                             <td style="text-align:center;">${r.puntaje_bruto}</td>
@@ -1450,13 +1713,9 @@ async function mostrarGraficas() {
                 <!-- Canalizaciones -->
                 <h3>Canalizaciones Recientes</h3>
                 <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,0.1); border-radius:12px;">
-                    <tr>
-                        <th style="color:#fff;">ID</th>
-                        <th style="color:#fff;">Empleado</th>
-                        <th style="color:#fff;">Fecha</th>
-                    </tr>
+                    <tr><th style="color:#fff;">ID</th><th style="color:#fff;">Empleado</th><th style="color:#fff;">Fecha</th></tr>
                     ${data.canalizaciones.map(c => `
-                        <tr>
+                        <tr style="background-color: rgba(255, 0, 0, 0.25);">
                             <td>${c.id_evaluacion}</td>
                             <td>${c.nombre}</td>
                             <td>${new Date(c.fecha_aplicacion).toLocaleDateString()}</td>
@@ -1471,13 +1730,23 @@ async function mostrarGraficas() {
         reportContainer.classList.add('hidden');
         document.getElementById('back-btn-graficas').addEventListener('click', goBack);
 
-        // Dibujar gráfica de pastel con leyenda blanca
+        // Dibujar gráfica de pastel
         if (data.nivelesGlobal.length > 0) {
-            const ctx = document.getElementById('grafica-niveles').getContext('2d');
-            const labels = data.nivelesGlobal.map(n => n.resultado_final);
-            const valores = data.nivelesGlobal.map(n => n.total);
-            const colores = ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff'];
+            // Ordenar los niveles para consistencia visual
+            const orden = ['Nulo', 'Bajo', 'Medio', 'Alto', 'Muy Alto'];
+            const nivelesOrdenados = data.nivelesGlobal
+                .slice()
+                .sort((a, b) => orden.indexOf(a.resultado_final) - orden.indexOf(b.resultado_final));
 
+            const labels = nivelesOrdenados.map(n => n.resultado_final);
+            const valores = nivelesOrdenados.map(n => n.total);
+            const colores = labels.map(label => {
+                // Convertir rgba a color sólido para la gráfica (opcional)
+                const color = colorPorNivel[label];
+                return color ? color.replace('0.25', '1') : '#CCCCCC';
+            });
+
+            const ctx = document.getElementById('grafica-niveles').getContext('2d');
             new Chart(ctx, {
                 type: 'pie',
                 data: {
@@ -1493,7 +1762,7 @@ async function mostrarGraficas() {
                     plugins: {
                         legend: {
                             labels: {
-                                color: '#ffffff'   // Texto de leyenda en blanco
+                                color: '#ffffff'
                             }
                         }
                     }

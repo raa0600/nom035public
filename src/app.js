@@ -29,7 +29,7 @@ app.use(express.static('frontend')); // <-- Cambiado a 'frontend'
 // Limitar peticiones
 const limiter = rateLimit({
     windowMs: 1 * 60 * 1000,
-    max: 100,
+    max: 100000,
     message: 'Demasiadas peticiones, intente de nuevo en 1 minuto.'
 });
 app.use('/api', limiter);
