@@ -30,6 +30,21 @@ const getPerfil = async (req, res, next) => {
     }
 };
 
+const getUsuarioById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const user = await usuarioModel.findById(parseInt(id));
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        // Omitir campos sensibles
+        const { contraseña_hash, ...rest } = user;
+        res.json(rest);
+    } catch (err) {
+        next(err);
+    }
+};
+
 // ---------- CREAR USUARIO (con empleado automático) ----------
 // ---------- CREAR USUARIO (con empleado automático) ----------
 const createUsuario = async (req, res, next) => {
@@ -245,13 +260,21 @@ const deleteUsuario = async (req, res, next) => {
 const updateUsuario = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { nombre, email, password, departamento, id_rol } = req.body;
+        const {
+            nombre, email, password, departamento, id_rol,
+            sexo, edad, estado_civil, nivel_estudios,
+            ocupacion_profesion_puesto, tipo_puesto, tipo_contratacion,
+            tipo_personal, tipo_jornada, rotacion_turno,
+            tiempo_exp_puesto, tiempo_exp_laboral
+        } = req.body;
 
+        // Obtener usuario actual
         const user = await usuarioModel.findById(parseInt(id));
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
+        // Actualizar USUARIO
         const updateData = {
             nombre: nombre || user.nombre,
             email: email || user.email,
@@ -264,7 +287,57 @@ const updateUsuario = async (req, res, next) => {
         }
 
         const updatedUser = await usuarioModel.update(parseInt(id), updateData);
-        const { contraseña_hash, ...rest } = updatedUser;
+
+        // Actualizar EMPLEADO solo si id_empleado es un número válido
+        const idEmpleado = parseInt(user.id_empleado);
+        if (!isNaN(idEmpleado) && idEmpleado > 0) {
+            try {
+                const pool = getPool();
+                await pool.request()
+                    .input('id_empleado', sql.Int, idEmpleado)
+                    .input('nombre', sql.NVarChar, nombre || user.nombre)
+                    .input('email', sql.NVarChar, email || user.email)
+                    .input('departamento', sql.NVarChar, departamento || user.departamento)
+                    .input('sexo', sql.NVarChar, sexo || user.sexo || null)
+                    .input('edad', sql.Int, edad || user.edad || null)
+                    .input('estado_civil', sql.NVarChar, estado_civil || user.estado_civil || null)
+                    .input('nivel_estudios', sql.NVarChar, nivel_estudios || user.nivel_estudios || null)
+                    .input('ocupacion', sql.NVarChar, ocupacion_profesion_puesto || user.ocupacion_profesion_puesto || null)
+                    .input('tipo_puesto', sql.NVarChar, tipo_puesto || user.tipo_puesto || null)
+                    .input('tipo_contratacion', sql.NVarChar, tipo_contratacion || user.tipo_contratacion || null)
+                    .input('tipo_personal', sql.NVarChar, tipo_personal || user.tipo_personal || null)
+                    .input('tipo_jornada', sql.NVarChar, tipo_jornada || user.tipo_jornada || null)
+                    .input('rotacion', sql.Bit, rotacion_turno !== undefined ? rotacion_turno : user.rotacion_turno)
+                    .input('exp_puesto', sql.Int, tiempo_exp_puesto !== undefined ? tiempo_exp_puesto : user.tiempo_exp_puesto)
+                    .input('exp_laboral', sql.Int, tiempo_exp_laboral !== undefined ? tiempo_exp_laboral : user.tiempo_exp_laboral)
+                    .query(`
+                        UPDATE EMPLEADO SET
+                            nombre = @nombre,
+                            email = @email,
+                            departamento_seccion_area = @departamento,
+                            sexo = @sexo,
+                            edad = @edad,
+                            estado_civil = @estado_civil,
+                            nivel_estudios = @nivel_estudios,
+                            ocupacion_profesion_puesto = @ocupacion,
+                            tipo_puesto = @tipo_puesto,
+                            tipo_contratacion = @tipo_contratacion,
+                            tipo_personal = @tipo_personal,
+                            tipo_jornada = @tipo_jornada,
+                            rotacion_turno = @rotacion,
+                            tiempo_exp_puesto = @exp_puesto,
+                            tiempo_exp_laboral = @exp_laboral
+                        WHERE id_empleado = @id_empleado
+                    `);
+            } catch (empError) {
+                console.error('❌ Error al actualizar EMPLEADO:', empError.message);
+                // No lanzar el error para permitir que la actualización del usuario se considere exitosa
+            }
+        }
+
+        // Obtener usuario actualizado con datos del empleado
+        const updated = await usuarioModel.findById(parseInt(id));
+        const { contraseña_hash, ...rest } = updated;
         res.json(rest);
     } catch (err) {
         next(err);
@@ -298,6 +371,7 @@ const resetPassword = async (req, res, next) => {
 
 module.exports = {
     getUsuarios,
+    getUsuarioById,
     getPerfil,
     createUsuario,
     updateRol,

@@ -13,9 +13,28 @@ const findById = async (id) => {
     const result = await pool.request()
         .input('id', sql.Int, id)
         .query(`
-            SELECT u.*, r.nombre_rol as rol_nombre 
+            SELECT 
+                u.*, 
+                r.nombre_rol as rol_nombre,
+                e.id_empleado,
+                e.nombre AS empleado_nombre,
+                e.sexo,
+                e.edad,
+                e.estado_civil,
+                e.nivel_estudios,
+                e.ocupacion_profesion_puesto,
+                e.departamento_seccion_area,
+                e.tipo_puesto,
+                e.tipo_contratacion,
+                e.tipo_personal,
+                e.tipo_jornada,
+                e.rotacion_turno,
+                e.tiempo_exp_puesto,
+                e.tiempo_exp_laboral,
+                e.email AS empleado_email
             FROM USUARIO u
             LEFT JOIN ROL r ON u.id_rol = r.id_rol
+            LEFT JOIN EMPLEADO e ON u.id_empleado = e.id_empleado
             WHERE u.id_usuario = @id
         `);
     return result.recordset[0] || null;

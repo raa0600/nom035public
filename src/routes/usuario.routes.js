@@ -18,4 +18,6 @@ router.put('/:id', authorize([1]), usuarioController.updateUsuario);
 router.put('/:id/reset-password', authorize([1]), usuarioController.resetPassword); // <-- NUEVA
 router.delete('/:id', authorize([1]), usuarioController.deleteUsuario);
 
+router.get('/:id', authorize([1]), usuarioController.getUsuarioById);
+
 module.exports = router;

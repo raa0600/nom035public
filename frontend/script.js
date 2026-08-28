@@ -303,7 +303,7 @@ function mostrarModalExito(titulo, mensaje, callback, botonTexto = 'Aceptar') {
 // ============================================================
 // MODAL PARA PREGUNTAS FALTANTES
 // ============================================================
-function mostrarModalFaltantes(mensaje) {
+function mostrarModalFaltantes(mensaje, titulo = 'Preguntas faltantes') {
     const previo = document.getElementById('modal-faltantes');
     if (previo) previo.remove();
 
@@ -335,7 +335,7 @@ function mostrarModalFaltantes(mensaje) {
                 <line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            <h2 style="margin:0 0 0.5rem; font-size:1.5rem;">Preguntas faltantes</h2>
+            <h2 style="margin:0 0 0.5rem; font-size:1.5rem;">${titulo}</h2>
             <p style="margin-bottom:1.5rem; opacity:0.9;">${mensaje}</p>
             <button id="modal-faltantes-cerrar" style="background: rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); border-radius:30px; color:#fff; padding:0.6rem 1.5rem; cursor:pointer; transition:0.3s; font-family:'Inter', sans-serif; font-size:1rem;">Aceptar</button>
         </div>
@@ -348,9 +348,6 @@ function mostrarModalFaltantes(mensaje) {
     });
 }
 
-// ============================================================
-// GESTIÓN DE USUARIOS (CRUD completo + reset password)
-// ============================================================
 // ============================================================
 // GESTIÓN DE USUARIOS (CRUD completo + reset password)
 // ============================================================
@@ -395,9 +392,9 @@ async function mostrarGestionUsuarios() {
                             <td style="padding:10px 14px;">${u.departamento || 'N/A'}</td>
                             <td style="padding:10px 14px;">${u.rol_nombre || u.id_rol}</td>
                             <td style="padding:10px 14px; white-space:nowrap;">
-                                <button class="btn-accion editar-usuario" title="Actualizar" data-id="${u.id_usuario}" data-nombre="${u.nombre}" data-email="${u.email}" data-rol="${u.id_rol}" data-departamento="${u.departamento || ''}">
-                                    <span class="icono-editar"></span>
-                                </button>
+                               <button class="btn-accion editar-usuario" title="Actualizar" data-id="${u.id_usuario}">
+    <span class="icono-editar"></span>
+</button>
                                 <button class="btn-accion reset-password" title="Generar nueva contraseña" data-id="${u.id_usuario}">
                                     <span class="icono-candado"></span>
                                 </button>
@@ -416,7 +413,7 @@ async function mostrarGestionUsuarios() {
             </div>
 
             <div id="form-creacion-container" style="display:none; margin-top:1.5rem;">
-                <form id="form-crear-usuario" style="max-width:520px; margin:0 auto; padding:1rem 0;">
+                <form id="form-crear-usuario" style="max-width:520px; margin:0 auto; padding:1rem 0;" novalidate>
                     <label>Nombre completo</label>
                     <input type="text" id="nombre-usuario" class="campo-gestion" placeholder="Ej. Juan Pérez" required>
 
@@ -549,25 +546,46 @@ async function mostrarGestionUsuarios() {
     document.getElementById('form-crear-usuario')?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Capturar todos los campos
+        // Validación de todos los campos
+        const camposFaltantes = [];
         const nombre = document.getElementById('nombre-usuario').value.trim();
         const email = document.getElementById('email-usuario').value.trim();
         const password = document.getElementById('password-usuario').value.trim();
         const departamento = document.getElementById('departamento-usuario').value.trim();
-        const id_rol = parseInt(document.getElementById('rol-usuario').value);
-
         const sexo = document.getElementById('sexo-usuario').value;
-        const edad = parseInt(document.getElementById('edad-usuario').value || '0') || null;
+        const edad = document.getElementById('edad-usuario').value.trim();
         const estado_civil = document.getElementById('estado-civil-usuario').value;
         const nivel_estudios = document.getElementById('nivel-estudios-usuario').value;
-        const ocupacion_profesion_puesto = document.getElementById('ocupacion-usuario').value.trim();
+        const ocupacion = document.getElementById('ocupacion-usuario').value.trim();
         const tipo_puesto = document.getElementById('tipo-puesto-usuario').value;
         const tipo_contratacion = document.getElementById('tipo-contratacion-usuario').value;
         const tipo_personal = document.getElementById('tipo-personal-usuario').value;
         const tipo_jornada = document.getElementById('tipo-jornada-usuario').value;
         const rotacion_turno = document.getElementById('rotacion-turno-usuario').value === '1';
-        const tiempo_exp_puesto = parseInt(document.getElementById('tiempo-puesto-usuario').value || '0') || null;
-        const tiempo_exp_laboral = parseInt(document.getElementById('tiempo-laboral-usuario').value || '0') || null;
+        const exp_puesto = document.getElementById('tiempo-puesto-usuario').value.trim();
+        const exp_laboral = document.getElementById('tiempo-laboral-usuario').value.trim();
+        const id_rol = parseInt(document.getElementById('rol-usuario').value);
+
+        if (!nombre) camposFaltantes.push('Nombre completo');
+        if (!email) camposFaltantes.push('Email');
+        if (!password) camposFaltantes.push('Contraseña');
+        if (!departamento) camposFaltantes.push('Departamento');
+        if (!sexo) camposFaltantes.push('Sexo');
+        if (!edad) camposFaltantes.push('Edad');
+        if (!estado_civil) camposFaltantes.push('Estado civil');
+        if (!nivel_estudios) camposFaltantes.push('Nivel de estudios');
+        if (!ocupacion) camposFaltantes.push('Ocupación');
+        if (!tipo_puesto) camposFaltantes.push('Tipo de puesto');
+        if (!tipo_contratacion) camposFaltantes.push('Tipo de contratación');
+        if (!tipo_personal) camposFaltantes.push('Tipo de personal');
+        if (!tipo_jornada) camposFaltantes.push('Tipo de jornada');
+        if (!exp_puesto) camposFaltantes.push('Experiencia en puesto');
+        if (!exp_laboral) camposFaltantes.push('Experiencia laboral');
+
+        if (camposFaltantes.length > 0) {
+            mostrarModalFaltantes(`Hay campos obligatorios sin contestar: ${camposFaltantes.join(', ')}.`, 'Campos faltantes');
+            return;
+        }
 
         const mensajeDiv = document.getElementById('mensaje-creacion');
         mensajeDiv.innerHTML = `<p class="mensaje-estado" style="color:#facf29;">
@@ -588,17 +606,17 @@ async function mostrarGestionUsuarios() {
                     departamento,
                     id_rol,
                     sexo,
-                    edad,
+                    edad: parseInt(edad) || null,
                     estado_civil,
                     nivel_estudios,
-                    ocupacion_profesion_puesto,
+                    ocupacion_profesion_puesto: ocupacion,
                     tipo_puesto,
                     tipo_contratacion,
                     tipo_personal,
                     tipo_jornada,
                     rotacion_turno,
-                    tiempo_exp_puesto,
-                    tiempo_exp_laboral
+                    tiempo_exp_puesto: parseInt(exp_puesto) || null,
+                    tiempo_exp_laboral: parseInt(exp_laboral) || null
                 })
             });
             const data = await res.json();
@@ -614,11 +632,10 @@ async function mostrarGestionUsuarios() {
                     Usuario creado exitosamente.
                 </p>
             `;
-            // Limpiar formulario
             document.getElementById('form-crear-usuario').reset();
             setTimeout(() => {
                 ocultarFormularioCreacion();
-                mostrarGestionUsuarios(); // Recargar lista
+                mostrarGestionUsuarios();
             }, 1500);
         } catch (err) {
             mensajeDiv.innerHTML = `<p style="color:#FF6B6B;">❌ Error de conexión: ${err.message}</p>`;
@@ -627,13 +644,18 @@ async function mostrarGestionUsuarios() {
 
     // ... (resto de listeners para editar, reset, eliminar permanecen igual)
     document.querySelectorAll('.editar-usuario').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
-            const nombre = btn.dataset.nombre;
-            const email = btn.dataset.email;
-            const rol = btn.dataset.rol;
-            const departamento = btn.dataset.departamento || '';
-            mostrarFormularioEdicion(id, nombre, email, rol, departamento);
+            try {
+                const res = await fetch(`/api/usuarios/${id}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('No se pudo obtener el usuario');
+                const usuario = await res.json();
+                mostrarFormularioEdicion(usuario);
+            } catch (err) {
+                alert('❌ ' + err.message);
+            }
         });
     });
 
@@ -780,8 +802,16 @@ function mostrarModalContraseña(contraseña) {
     });
 }
 
-function mostrarFormularioEdicion(id, nombre, email, rol, departamento) {
+function mostrarFormularioEdicion(usuario) {
     const token = localStorage.getItem('token');
+    const {
+        id_usuario, nombre, email, departamento, id_rol,
+        sexo, edad, estado_civil, nivel_estudios,
+        ocupacion_profesion_puesto, tipo_puesto, tipo_contratacion,
+        tipo_personal, tipo_jornada, rotacion_turno,
+        tiempo_exp_puesto, tiempo_exp_laboral
+    } = usuario;
+
     reportContainer.innerHTML = `
         <button type="button" class="back-btn" id="back-btn-editar">← Atrás</button>
         <div style="color:white; padding:1rem;">
@@ -789,7 +819,7 @@ function mostrarFormularioEdicion(id, nombre, email, rol, departamento) {
                 <span class="icono-editar-titulo"></span>
                 Editar usuario
             </h2>
-            <form id="form-editar-usuario">
+            <form id="form-editar-usuario" novalidate>
                 <label>Nombre completo</label>
                 <input type="text" id="edit-nombre" value="${nombre}" required>
 
@@ -799,17 +829,99 @@ function mostrarFormularioEdicion(id, nombre, email, rol, departamento) {
                 <label>Departamento</label>
                 <input type="text" id="edit-departamento" value="${departamento || ''}">
 
-                <label>Nueva contraseña (dejar vacío para no cambiar)</label>
-                <input type="password" id="edit-password" placeholder="Nueva contraseña">
+                <label>Sexo</label>
+                <select id="edit-sexo">
+                    <option value="">Seleccione...</option>
+                    <option value="Masculino" ${sexo === 'Masculino' ? 'selected' : ''}>Masculino</option>
+                    <option value="Femenino" ${sexo === 'Femenino' ? 'selected' : ''}>Femenino</option>
+                    <option value="Otro" ${sexo === 'Otro' ? 'selected' : ''}>Otro</option>
+                </select>
+
+                <label>Edad</label>
+                <input type="number" id="edit-edad" value="${edad || ''}" min="15" max="100">
+
+                <label>Estado civil</label>
+                <select id="edit-estado-civil">
+                    <option value="">Seleccione...</option>
+                    <option value="Soltero" ${estado_civil === 'Soltero' ? 'selected' : ''}>Soltero</option>
+                    <option value="Casado" ${estado_civil === 'Casado' ? 'selected' : ''}>Casado</option>
+                    <option value="Unión libre" ${estado_civil === 'Unión libre' ? 'selected' : ''}>Unión libre</option>
+                    <option value="Divorciado" ${estado_civil === 'Divorciado' ? 'selected' : ''}>Divorciado</option>
+                    <option value="Viudo" ${estado_civil === 'Viudo' ? 'selected' : ''}>Viudo</option>
+                </select>
+
+                <label>Nivel de estudios</label>
+                <select id="edit-nivel-estudios">
+                    <option value="">Seleccione...</option>
+                    <option value="Primaria" ${nivel_estudios === 'Primaria' ? 'selected' : ''}>Primaria</option>
+                    <option value="Secundaria" ${nivel_estudios === 'Secundaria' ? 'selected' : ''}>Secundaria</option>
+                    <option value="Preparatoria" ${nivel_estudios === 'Preparatoria' ? 'selected' : ''}>Preparatoria</option>
+                    <option value="Técnico" ${nivel_estudios === 'Técnico' ? 'selected' : ''}>Técnico</option>
+                    <option value="Licenciatura" ${nivel_estudios === 'Licenciatura' ? 'selected' : ''}>Licenciatura</option>
+                    <option value="Posgrado" ${nivel_estudios === 'Posgrado' ? 'selected' : ''}>Posgrado</option>
+                </select>
+
+                <label>Ocupación / Profesión / Puesto</label>
+                <input type="text" id="edit-ocupacion" value="${ocupacion_profesion_puesto || ''}">
+
+                <label>Tipo de puesto</label>
+                <select id="edit-tipo-puesto">
+                    <option value="">Seleccione...</option>
+                    <option value="Operativo" ${tipo_puesto === 'Operativo' ? 'selected' : ''}>Operativo</option>
+                    <option value="Administrativo" ${tipo_puesto === 'Administrativo' ? 'selected' : ''}>Administrativo</option>
+                    <option value="Supervisión" ${tipo_puesto === 'Supervisión' ? 'selected' : ''}>Supervisión</option>
+                    <option value="Gerencial" ${tipo_puesto === 'Gerencial' ? 'selected' : ''}>Gerencial</option>
+                    <option value="Directivo" ${tipo_puesto === 'Directivo' ? 'selected' : ''}>Directivo</option>
+                </select>
+
+                <label>Tipo de contratación</label>
+                <select id="edit-tipo-contratacion">
+                    <option value="">Seleccione...</option>
+                    <option value="Base" ${tipo_contratacion === 'Base' ? 'selected' : ''}>Base</option>
+                    <option value="Confianza" ${tipo_contratacion === 'Confianza' ? 'selected' : ''}>Confianza</option>
+                    <option value="Honorarios" ${tipo_contratacion === 'Honorarios' ? 'selected' : ''}>Honorarios</option>
+                    <option value="Prácticas" ${tipo_contratacion === 'Prácticas' ? 'selected' : ''}>Prácticas</option>
+                </select>
+
+                <label>Tipo de personal</label>
+                <select id="edit-tipo-personal">
+                    <option value="">Seleccione...</option>
+                    <option value="Interno" ${tipo_personal === 'Interno' ? 'selected' : ''}>Interno</option>
+                    <option value="Externo / Outsourcing" ${tipo_personal === 'Externo / Outsourcing' ? 'selected' : ''}>Externo / Outsourcing</option>
+                </select>
+
+                <label>Tipo de jornada</label>
+                <select id="edit-tipo-jornada">
+                    <option value="">Seleccione...</option>
+                    <option value="Tiempo completo" ${tipo_jornada === 'Tiempo completo' ? 'selected' : ''}>Tiempo completo</option>
+                    <option value="Medio tiempo" ${tipo_jornada === 'Medio tiempo' ? 'selected' : ''}>Medio tiempo</option>
+                    <option value="Por horas" ${tipo_jornada === 'Por horas' ? 'selected' : ''}>Por horas</option>
+                    <option value="Turnos rotativos" ${tipo_jornada === 'Turnos rotativos' ? 'selected' : ''}>Turnos rotativos</option>
+                </select>
+
+                <label>¿Tiene rotación de turno?</label>
+                <select id="edit-rotacion">
+                    <option value="0" ${!rotacion_turno ? 'selected' : ''}>No</option>
+                    <option value="1" ${rotacion_turno ? 'selected' : ''}>Sí</option>
+                </select>
+
+                <label>Tiempo de experiencia en el puesto (años)</label>
+                <input type="number" id="edit-exp-puesto" value="${tiempo_exp_puesto || ''}" min="0" max="60">
+
+                <label>Tiempo de experiencia laboral total (años)</label>
+                <input type="number" id="edit-exp-laboral" value="${tiempo_exp_laboral || ''}" min="0" max="60">
 
                 <label>Rol</label>
                 <select id="edit-rol">
-                    <option value="1" ${rol == 1 ? 'selected' : ''}>Administrador</option>
-                    <option value="2" ${rol == 2 ? 'selected' : ''}>Supervisor</option>
-                    <option value="3" ${rol == 3 ? 'selected' : ''}>Empleado</option>
+                    <option value="1" ${id_rol == 1 ? 'selected' : ''}>Administrador</option>
+                    <option value="2" ${id_rol == 2 ? 'selected' : ''}>Supervisor</option>
+                    <option value="3" ${id_rol == 3 ? 'selected' : ''}>Empleado</option>
                 </select>
 
-                <button type="submit">Actualizar usuario</button>
+                <label>Nueva contraseña (dejar vacío para no cambiar)</label>
+                <input type="password" id="edit-password" placeholder="Nueva contraseña">
+
+                <button type="button" id="btn-actualizar-usuario" class="btn-holografico">Actualizar usuario</button>
             </form>
             <div id="mensaje-edicion"></div>
         </div>
@@ -820,13 +932,50 @@ function mostrarFormularioEdicion(id, nombre, email, rol, departamento) {
         mostrarGestionUsuarios();
     });
 
-    document.getElementById('form-editar-usuario').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('edit-nombre').value.trim();
-        const email = document.getElementById('edit-email').value.trim();
-        const password = document.getElementById('edit-password').value.trim();
-        const departamento = document.getElementById('edit-departamento').value.trim();
-        const id_rol = parseInt(document.getElementById('edit-rol').value);
+    // Botón actualizar con evento click (no submit)
+    document.getElementById('btn-actualizar-usuario').addEventListener('click', async () => {
+        console.log('🟢 Click en Actualizar usuario');
+
+        // Obtener valores
+        const nombreVal = document.getElementById('edit-nombre').value.trim();
+        const emailVal = document.getElementById('edit-email').value.trim();
+        const departamentoVal = document.getElementById('edit-departamento').value.trim();
+        const sexoVal = document.getElementById('edit-sexo').value;
+        const edadVal = document.getElementById('edit-edad').value.trim();
+        const estadoCivilVal = document.getElementById('edit-estado-civil').value;
+        const nivelEstudiosVal = document.getElementById('edit-nivel-estudios').value;
+        const ocupacionVal = document.getElementById('edit-ocupacion').value.trim();
+        const tipoPuestoVal = document.getElementById('edit-tipo-puesto').value;
+        const tipoContratacionVal = document.getElementById('edit-tipo-contratacion').value;
+        const tipoPersonalVal = document.getElementById('edit-tipo-personal').value;
+        const tipoJornadaVal = document.getElementById('edit-tipo-jornada').value;
+        const rotacionTurnoVal = document.getElementById('edit-rotacion').value === '1';
+        const expPuestoVal = document.getElementById('edit-exp-puesto').value.trim();
+        const expLaboralVal = document.getElementById('edit-exp-laboral').value.trim();
+        const rolVal = parseInt(document.getElementById('edit-rol').value);
+        const passwordVal = document.getElementById('edit-password').value.trim();
+
+        // Validación todos los campos obligatorios
+        const camposFaltantes = [];
+        if (!nombreVal) camposFaltantes.push('Nombre completo');
+        if (!emailVal) camposFaltantes.push('Email');
+        if (!departamentoVal) camposFaltantes.push('Departamento');
+        if (!sexoVal) camposFaltantes.push('Sexo');
+        if (!edadVal) camposFaltantes.push('Edad');
+        if (!estadoCivilVal) camposFaltantes.push('Estado civil');
+        if (!nivelEstudiosVal) camposFaltantes.push('Nivel de estudios');
+        if (!ocupacionVal) camposFaltantes.push('Ocupación');
+        if (!tipoPuestoVal) camposFaltantes.push('Tipo de puesto');
+        if (!tipoContratacionVal) camposFaltantes.push('Tipo de contratación');
+        if (!tipoPersonalVal) camposFaltantes.push('Tipo de personal');
+        if (!tipoJornadaVal) camposFaltantes.push('Tipo de jornada');
+        if (!expPuestoVal) camposFaltantes.push('Experiencia en puesto');
+        if (!expLaboralVal) camposFaltantes.push('Experiencia laboral');
+
+        if (camposFaltantes.length > 0) {
+            mostrarModalFaltantes(`Hay campos obligatorios sin contestar: ${camposFaltantes.join(', ')}.`, 'Campos faltantes');
+            return;
+        }
 
         const mensajeDiv = document.getElementById('mensaje-edicion');
         mensajeDiv.innerHTML = `<p class="mensaje-estado" style="color:#facf29;">
@@ -834,26 +983,39 @@ function mostrarFormularioEdicion(id, nombre, email, rol, departamento) {
         </p>`;
 
         try {
-            const res = await fetch(`/api/usuarios/${id}`, {
+            const res = await fetch(`/api/usuarios/${id_usuario}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({ nombre, email, password, departamento, id_rol })
+                body: JSON.stringify({
+                    nombre: nombreVal,
+                    email: emailVal,
+                    password: passwordVal,
+                    departamento: departamentoVal,
+                    id_rol: rolVal,
+                    sexo: sexoVal,
+                    edad: parseInt(edadVal) || null,
+                    estado_civil: estadoCivilVal,
+                    nivel_estudios: nivelEstudiosVal,
+                    ocupacion_profesion_puesto: ocupacionVal,
+                    tipo_puesto: tipoPuestoVal,
+                    tipo_contratacion: tipoContratacionVal,
+                    tipo_personal: tipoPersonalVal,
+                    tipo_jornada: tipoJornadaVal,
+                    rotacion_turno: rotacionTurnoVal,
+                    tiempo_exp_puesto: parseInt(expPuestoVal) || null,
+                    tiempo_exp_laboral: parseInt(expLaboralVal) || null
+                })
             });
             const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al actualizar usuario');
 
-            if (!res.ok) {
-                throw new Error(data.error || 'Error al actualizar usuario');
-            }
-
-            mensajeDiv.innerHTML = `
-                <p class="mensaje-estado" style="color:#facf29;">
-                    <span class="icono-check-amarillo"></span>
-                    Usuario actualizado correctamente.
-                </p>
-            `;
+            mensajeDiv.innerHTML = `<p class="mensaje-estado" style="color:#facf29;">
+                <span class="icono-check-amarillo"></span>
+                Usuario actualizado correctamente.
+            </p>`;
             setTimeout(() => mostrarGestionUsuarios(), 1500);
         } catch (err) {
             mensajeDiv.innerHTML = `<p style="color:#FF6B6B;">❌ ${err.message}</p>`;
@@ -1635,9 +1797,6 @@ function obtenerRecomendacion(nivel) {
 // ============================================================
 // GRÁFICAS Y ESTADÍSTICAS
 // ============================================================
-// ============================================================
-// GRÁFICAS Y ESTADÍSTICAS
-// ============================================================
 async function mostrarGraficas() {
     const token = localStorage.getItem('token');
     try {
@@ -1651,7 +1810,7 @@ async function mostrarGraficas() {
         const colorPorNivel = {
             'Muy Alto': 'rgba(255, 0, 0, 0.8)',   // rojo
             'Alto': 'rgba(255, 165, 0, 0.8)',    // naranja
-            'Medio': 'rgba(255, 255, 0, 0.8)',   // amarillo
+            'Medio': 'rgba(255, 255, 0, 0.7)',   // amarillo
             'Bajo': 'rgba(0, 128, 0, 0.8)',      // verde
             'Nulo': 'rgba(135, 206, 235, 0.8)'   // azul cielo
         };
