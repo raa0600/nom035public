@@ -8,23 +8,19 @@ const { errorHandler } = require('./middlewares/error.middleware');
 const app = express();
 
 // Middlewares de seguridad
-// app.use(helmet());
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:"],
-        },
-    },
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    originAgentCluster: false, // desactiva la cabecera Origin-Agent-Cluster
 }));
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 // Servir archivos estáticos desde la carpeta 'frontend'
-app.use(express.static('frontend')); // <-- Cambiado a 'frontend'
+app.use(express.static('frontend'));
 
 // Limitar peticiones
 const limiter = rateLimit({
@@ -37,7 +33,7 @@ app.use('/api', limiter);
 // Rutas de la API
 app.use('/api', routes);
 
-// Manejador de errores global (siempre al final)
+// Manejador de errores global
 app.use(errorHandler);
 
 module.exports = app;
