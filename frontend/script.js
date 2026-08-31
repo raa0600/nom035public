@@ -1549,35 +1549,42 @@ async function cargarGuiaIII(idEvaluacion) {
 
         document.getElementById('form-guia-iii').addEventListener('submit', async (e) => {
             e.preventDefault();
-
+        
             const faltantes = [];
-
-            for (let num = 1; num <= 64; num++) {
-                const contestada = document.querySelector(`input[name="pregunta_${num}"]:checked`);
-                if (!contestada) faltantes.push(num);
-            }
-
-            const filtroClientes = document.querySelector('input[name="filtro_clientes"]:checked');
-            if (filtroClientes && filtroClientes.value === '1') {
-                for (let num = 65; num <= 68; num++) {
-                    const contestada = document.querySelector(`input[name="pregunta_${num}"]:checked`);
+        
+            // Recorrer todas las preguntas cargadas
+            for (const pregunta of preguntas) {
+                const num = pregunta.numero;
+                const id = pregunta.id_pregunta;
+                const contestada = document.querySelector(`input[name="pregunta_${id}"]:checked`);
+        
+                // Preguntas principales: 1-64 siempre requeridas
+                if (num >= 1 && num <= 64) {
                     if (!contestada) faltantes.push(num);
                 }
-            }
-
-            const filtroJefes = document.querySelector('input[name="filtro_jefe"]:checked');
-            if (filtroJefes && filtroJefes.value === '1') {
-                for (let num = 69; num <= 72; num++) {
-                    const contestada = document.querySelector(`input[name="pregunta_${num}"]:checked`);
-                    if (!contestada) faltantes.push(num);
+        
+                // Preguntas condicionales: 65-68 solo si filtro_clientes = 1
+                if (num >= 65 && num <= 68) {
+                    const filtroClientes = document.querySelector('input[name="filtro_clientes"]:checked');
+                    if (filtroClientes && filtroClientes.value === '1') {
+                        if (!contestada) faltantes.push(num);
+                    }
+                }
+        
+                // Preguntas condicionales: 69-72 solo si filtro_jefe = 1
+                if (num >= 69 && num <= 72) {
+                    const filtroJefes = document.querySelector('input[name="filtro_jefe"]:checked');
+                    if (filtroJefes && filtroJefes.value === '1') {
+                        if (!contestada) faltantes.push(num);
+                    }
                 }
             }
-
+        
             if (faltantes.length > 0) {
                 mostrarModalFaltantes(`Faltan las siguientes preguntas por responder: ${faltantes.join(', ')}`);
                 return;
             }
-
+        
             await finalizarEvaluacion(idEvaluacion);
         });
 
