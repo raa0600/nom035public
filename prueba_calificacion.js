@@ -24,26 +24,30 @@ function calcularPuntajeEsperado(preguntas, valoresCrudos) {
 
 async function ejecutarEscenario(nombre, valoresCrudos) {
   console.log(`\n--- Escenario: ${nombre} ---`);
-  const email = `prueba_${Date.now()}_${Math.floor(Math.random()*1000)}@test.com`;
+  const email = `x_test_${Date.now()}_${Math.floor(Math.random()*1000)}@test.com`;
   const password = '123456';
 
+  // Registrar usuario con nombre que inicia en "X"
   await apiFetch('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ nombre: `Prueba ${nombre}`, email, password, departamento: 'Pruebas' })
+    body: JSON.stringify({ nombre: `X Prueba ${nombre}`, email, password, departamento: 'Pruebas' })
   });
 
+  // Login
   const login = await apiFetch('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password })
   });
   const token = login.token;
 
+  // Iniciar evaluación
   const iniciar = await apiFetch('/evaluacion/iniciar', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + token }
   });
   const idEvaluacion = iniciar.id_evaluacion;
 
+  // Guía I: todas "No"
   const preguntasGuiaI = await apiFetch('/evaluacion/guia-i/preguntas', {
     headers: { 'Authorization': 'Bearer ' + token }
   });
@@ -54,10 +58,12 @@ async function ejecutarEscenario(nombre, valoresCrudos) {
     body: JSON.stringify({ respuestas: respuestasGuiaI })
   });
 
+  // Obtener preguntas Guía III
   const preguntasIII = await apiFetch(`/evaluacion/${idEvaluacion}/preguntas`, {
     headers: { 'Authorization': 'Bearer ' + token }
   });
 
+  // Enviar respuestas (solo las 64 primeras)
   for (let i = 0; i < 64; i++) {
     const numero = i + 1;
     const pregunta = preguntasIII.find(p => p.numero === numero);
@@ -72,11 +78,13 @@ async function ejecutarEscenario(nombre, valoresCrudos) {
   const puntajeEsperado = calcularPuntajeEsperado(preguntasIII, valoresCrudos);
   console.log(`Puntaje esperado: ${puntajeEsperado}`);
 
+  // Finalizar evaluación
   await apiFetch(`/evaluacion/${idEvaluacion}/finalizar`, {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + token }
   });
 
+  // Obtener resultados
   const resultados = await apiFetch(`/evaluacion/${idEvaluacion}/resultados`, {
     headers: { 'Authorization': 'Bearer ' + token }
   });
@@ -91,22 +99,20 @@ async function ejecutarEscenario(nombre, valoresCrudos) {
   }
 }
 
-// Listas de preguntas inversas y directas (según la tabla proporcionada)
+// Listas de preguntas inversas y directas según la tabla
 const inversos = [1,4,23,24,25,26,27,28,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,55,56,57];
 const directos = [2,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,29,54,58,59,60,61,62,63,64];
 
 (async () => {
-  // Escenario Nulo: directas = 0, inversas = 4
+  // Escenario Nulo
   const valoresNulo = new Array(64).fill(0);
   inversos.forEach(num => valoresNulo[num-1] = 4);
   directos.forEach(num => valoresNulo[num-1] = 0);
-
   await ejecutarEscenario('Nulo', valoresNulo);
 
-  // Escenario Muy Alto: directas = 4, inversas = 0
+  // Escenario Muy Alto
   const valoresMuyAlto = new Array(64).fill(0);
   directos.forEach(num => valoresMuyAlto[num-1] = 4);
   inversos.forEach(num => valoresMuyAlto[num-1] = 0);
-
   await ejecutarEscenario('Muy Alto', valoresMuyAlto);
 })();

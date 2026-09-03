@@ -1120,10 +1120,10 @@ async function iniciarEvaluacion() {
         if (evaluacion) {
             if (evaluacion.estatus === 'Canalizacion_requerida') {
                 mostrarModalExito(
-                    'Evaluación completada',
-                    'Recursos Humanos revisará la información y se pondrá en contacto si es necesario.',
-                    goHome,
-                    'Aceptar'
+                    'Evaluación en curso',
+                    'Tienes una evaluación pendiente. ¿Deseas continuar?',
+                    () => cargarGuiaIII(evaluacion.id_evaluacion),
+                    'Continuar'
                 );
             } else if (evaluacion.estatus === 'En_proceso') {
                 mostrarModalExito(
@@ -1325,10 +1325,10 @@ async function guardarGuiaI(idEvaluacion, respuestas) {
 
         if (data.requiereCanalizacion) {
             mostrarModalExito(
-                'Evaluación completada',
-                'Recursos Humanos revisará la información y se pondrá en contacto si es necesario.',
-                goHome,
-                'Aceptar'
+                'Canalización requerida',
+                'Se detectó la necesidad de canalización. A continuación, responda el cuestionario principal.',
+                () => cargarGuiaIII(idEvaluacion),
+                'Continuar'
             );
         } else {
             mostrarModalExito(

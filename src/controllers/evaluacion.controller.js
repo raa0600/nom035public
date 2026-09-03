@@ -26,9 +26,15 @@ const guardarGuiaI = async (req, res, next) => {
         const resultado = await evaluarGuiaI(id);
 
         if (resultado.requiereCanalizacion) {
-            await evaluacionModel.updateStatus(id, 'Canalizacion_requerida');
+            // Marcar canalización y continuar con Guía III
+            const pool = getPool();
+            await pool.request()
+                .input('id_eval', sql.Int, id)
+                .input('canaliza', sql.Bit, 1)
+                .query('UPDATE EVALUACION SET requiere_canalizacion = @canaliza WHERE id_evaluacion = @id_eval');
+            await evaluacionModel.updateStatus(id, 'En_proceso');
             return res.json({
-                message: 'Guía I completada. Se requiere canalización a atención clínica.',
+                message: 'Se detectó canalización. Continúe con el cuestionario principal.',
                 requiereCanalizacion: true,
                 detalle: resultado.detalle
             });
@@ -161,11 +167,11 @@ function clasificarGlobal(puntaje) {
 
 function clasificarCategoria(id_categoria, puntaje) {
     const umbrales = {
-        1: [5, 9, 11, 14],      // Ambiente de trabajo
-        2: [15, 30, 45, 60],    // Factores propios de la actividad
-        3: [5, 7, 10, 13],      // Organización del tiempo de trabajo
-        4: [14, 29, 42, 58],    // Liderazgo y relaciones en el trabajo
-        5: [10, 14, 18, 23]     // Entorno organizacional
+        1: [5, 9, 11, 14],
+        2: [15, 30, 45, 60],
+        3: [5, 7, 10, 13],
+        4: [14, 29, 42, 58],
+        5: [10, 14, 18, 23]
     };
     const u = umbrales[id_categoria];
     if (!u) return 'Nulo';
@@ -178,16 +184,16 @@ function clasificarCategoria(id_categoria, puntaje) {
 
 function clasificarDominio(id_dominio, puntaje) {
     const umbrales = {
-        1: [5, 9, 11, 14],      // Condiciones en el ambiente de trabajo
-        2: [15, 21, 27, 37],    // Carga de trabajo
-        3: [11, 16, 21, 25],    // Falta de control sobre el trabajo
-        4: [1, 2, 4, 6],        // Jornada de trabajo
-        5: [4, 6, 8, 10],       // Interferencia en la relación trabajo-familia
-        6: [9, 12, 16, 20],     // Liderazgo
-        7: [10, 13, 17, 21],    // Relaciones en el trabajo
-        8: [7, 10, 13, 16],     // Violencia
-        9: [6, 10, 14, 18],     // Reconocimiento del desempeño
-        10: [4, 6, 8, 10]       // Insuficiente sentido de pertenencia e inestabilidad
+        1: [5, 9, 11, 14],
+        2: [15, 21, 27, 37],
+        3: [11, 16, 21, 25],
+        4: [1, 2, 4, 6],
+        5: [4, 6, 8, 10],
+        6: [9, 12, 16, 20],
+        7: [10, 13, 17, 21],
+        8: [7, 10, 13, 16],
+        9: [6, 10, 14, 18],
+        10: [4, 6, 8, 10]
     };
     const u = umbrales[id_dominio];
     if (!u) return 'Nulo';
@@ -231,16 +237,11 @@ const finalizarEvaluacion = async (req, res, next) => {
             const pregunta = preguntasMap[id_pregunta];
             if (!pregunta) continue;
 
-            // ============================================================
-            // CAMBIO IMPORTANTE: compatible con INVERSO/DIRECTO y variantes
-            // ============================================================
             const tipo = pregunta.tipo_puntaje.toLowerCase();
             let puntaje = valor;
 
             if (tipo === 'inverso' || tipo === 'inversa' || tipo === '0') {
                 puntaje = 4 - valor;
-            } else if (tipo === 'directo' || tipo === 'directa' || tipo === '1') {
-                puntaje = valor;
             } else {
                 puntaje = valor;
             }
@@ -452,7 +453,7 @@ const getCanalizaciones = async (req, res, next) => {
                 FROM EVALUACION e
                 JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
                 JOIN USUARIO u ON u.id_empleado = emp.id_empleado
-                WHERE e.estatus = 'Canalizacion_requerida'
+                WHERE e.requiere_canalizacion = 1 AND e.estatus = 'Completada'
                 ORDER BY e.fecha_aplicacion DESC
             `);
         res.json(result.recordset);
@@ -468,15 +469,14 @@ const deleteEvaluacion = async (req, res, next) => {
 
         const evalResult = await pool.request()
             .input('id', sql.Int, id)
-            .query('SELECT estatus FROM EVALUACION WHERE id_evaluacion = @id');
+            .query('SELECT requiere_canalizacion FROM EVALUACION WHERE id_evaluacion = @id');
 
         if (evalResult.recordset.length === 0) {
             return res.status(404).json({ error: 'Evaluación no encontrada' });
         }
 
-        const estatus = evalResult.recordset[0].estatus;
-        if (estatus !== 'Canalizacion_requerida') {
-            return res.status(400).json({ error: 'Solo se pueden eliminar evaluaciones en estado de canalización' });
+        if (!evalResult.recordset[0].requiere_canalizacion) {
+            return res.status(400).json({ error: 'Solo se pueden eliminar evaluaciones con canalización' });
         }
 
         await pool.request().input('id', sql.Int, id).query('DELETE FROM RESPUESTA_GUIA_I WHERE id_evaluacion = @id');
@@ -496,7 +496,6 @@ const getDatosGraficas = async (req, res, next) => {
     try {
         const pool = getPool();
 
-        // Distribución de niveles de riesgo global
         const nivelesGlobal = await pool.request().query(`
             SELECT rg.resultado_final, COUNT(*) AS total
             FROM RESULTADO_GLOBAL rg
@@ -505,7 +504,6 @@ const getDatosGraficas = async (req, res, next) => {
             GROUP BY rg.resultado_final
         `);
 
-        // Top 10 categorías por promedio de puntaje porcentual
         const topCategorias = await pool.request().query(`
             SELECT TOP 10 c.nombre AS nombre, AVG(rc.puntaje_porcentaje) AS promedio
             FROM RESULTADO_CATEGORIA rc
@@ -516,7 +514,6 @@ const getDatosGraficas = async (req, res, next) => {
             ORDER BY promedio DESC
         `);
 
-        // Top 10 dominios por promedio de puntaje porcentual
         const topDominios = await pool.request().query(`
             SELECT TOP 10 d.nombre AS nombre, AVG(rd.puntaje_porcentaje) AS promedio
             FROM RESULTADO_DOMINIO rd
@@ -527,7 +524,6 @@ const getDatosGraficas = async (req, res, next) => {
             ORDER BY promedio DESC
         `);
 
-        // Reportes completados ordenados por riesgo (alto a bajo)
         const reportes = await pool.request().query(`
             SELECT e.id_evaluacion, emp.nombre, rg.puntaje_bruto, rg.resultado_final
             FROM EVALUACION e
@@ -543,12 +539,11 @@ const getDatosGraficas = async (req, res, next) => {
             END, rg.puntaje_bruto DESC, e.fecha_aplicacion DESC
         `);
 
-        // Canalizaciones ordenadas por fecha (más recientes primero)
         const canalizaciones = await pool.request().query(`
             SELECT e.id_evaluacion, emp.nombre, e.fecha_aplicacion
             FROM EVALUACION e
             JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
-            WHERE e.estatus = 'Canalizacion_requerida'
+            WHERE e.requiere_canalizacion = 1 AND e.estatus = 'Completada'
             ORDER BY e.fecha_aplicacion DESC
         `);
 
