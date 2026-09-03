@@ -1752,3 +1752,138 @@
       padding: 0.5rem;
     }
   }
+
+
+  @media print {
+    @page {
+        margin: 15mm;
+    }
+
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+
+    body > *:not(#app-screen) {
+        display: none !important;
+    }
+
+    #app-screen > *:not(#form-container) {
+        display: none !important;
+    }
+
+    #form-container > *:not(#area-imprimir) {
+        display: none !important;
+    }
+
+    #area-imprimir {
+        display: block !important;
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #area-imprimir * {
+        color: black !important;
+        text-shadow: none !important;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+        white-space: normal !important;
+        background: none !important;
+    }
+
+    #logo-impresion {
+        display: flex !important;
+        justify-content: flex-end;
+        margin-bottom: 10mm;
+    }
+
+    #logo-impresion .logo-blanco {
+        display: none !important;
+    }
+
+    #logo-impresion .logo-negro {
+        display: block !important;
+        height: 80px;
+        width: auto;
+    }
+
+    #area-imprimir table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    #area-imprimir th,
+    #area-imprimir td {
+        border: 1px solid #000;
+        padding: 8px;
+    }
+
+    #area-imprimir .recomendacion-destacada {
+        background: #f5f5f5 !important;
+        border-left: 4px solid #000;
+        padding: 10px;
+    }
+}
+
+.pdf-generando {
+  background: white !important;
+  color: black !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+.pdf-generando * {
+  color: black !important;
+  text-shadow: none !important;
+  background: none !important;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+.pdf-generando table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.pdf-generando th,
+.pdf-generando td {
+  border: 1px solid #000;
+  padding: 8px;
+}
+
+.pdf-generando .recomendacion-destacada {
+  background: #f5f5f5 !important;
+  border-left: 4px solid #000;
+  padding: 10px;
+}
+
+.pdf-generando #logo-impresion {
+  display: block !important;
+  text-align: right !important;
+  margin-bottom: 20px;
+  overflow: visible !important;
+}
+
+.pdf-generando #logo-impresion .logo-blanco {
+  display: none !important;
+}
+
+.pdf-generando #logo-impresion .logo-negro {
+  display: inline-block !important;
+  height: 60px;
+  width: auto;
+  margin-left: auto;
+  /* Opcional: float: right; */
+}

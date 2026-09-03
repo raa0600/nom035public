@@ -1719,6 +1719,7 @@ async function mostrarReportes() {
     }
 }
 
+
 async function verResultadoEvaluacion(idEvaluacion) {
     const token = localStorage.getItem('token');
     try {
@@ -1729,13 +1730,29 @@ async function verResultadoEvaluacion(idEvaluacion) {
         if (!res.ok) throw new Error(data.error || 'Error al obtener resultados');
 
         let html = `
-            <button type="button" class="back-btn" id="back-btn-resultado">← Volver</button>
-            <div style="color:white; padding:1rem;">
-                <h2 class="form-title">Resultados de Evaluación #${idEvaluacion}</h2>
+            <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                <button type="button" class="back-btn" id="back-btn-resultado" style="flex:1;">← Volver</button>
+                <button type="button" class="back-btn" id="btn-imprimir-resultado" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-printer"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Imprimir
+                </button>
+                <button type="button" class="back-btn" id="btn-guardar-pdf" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-save"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Guardar PDF
+                </button>
+            </div>
+            <div id="area-imprimir" style="color:white; padding:1rem;">
+                <div id="logo-impresion" style="display:none; text-align:right; margin-bottom:1rem;">
+                    <img src="/img/logo_lagacela_iso.svg" alt="Logo" style="height:80px;" class="logo-blanco">
+                    <img src="/img/logo_lagacela_negro_iso.svg" alt="Logo" style="height:80px; display:none;" class="logo-negro">
+                </div>
+                <h2 class="form-title">Resultados&nbsp;de&nbsp;Evaluación&nbsp;#${idEvaluacion}</h2>
+                <p><strong>Empleado:</strong> ${data.empleado_nombre || 'No&nbsp;disponible'}</p>
+                <p><strong>Fecha&nbsp;de&nbsp;finalización:</strong> ${data.fecha_finalizacion || 'No&nbsp;disponible'}</p>
                 ${data.global ? `
                     <div style="background:rgba(255,255,255,0.1); padding:1rem; border-radius:12px; margin-bottom:1rem;">
-                        <p><strong>Puntaje global:</strong> ${data.global.puntaje_bruto} / ${data.global.puntaje_maximo} (${data.global.puntaje_porcentaje}%)</p>
-                        <p><strong>Nivel de riesgo:</strong> ${data.global.resultado_final}</p>
+                        <p><strong>Puntaje&nbsp;global:</strong> ${data.global.puntaje_bruto} / ${data.global.puntaje_maximo} (${data.global.puntaje_porcentaje}%)</p>
+                        <p><strong>Nivel&nbsp;de&nbsp;riesgo:</strong> ${data.global.resultado_final}</p>
                     </div>
                     <div class="recomendacion-destacada">
                         <h3>Recomendación</h3>
@@ -1746,7 +1763,7 @@ async function verResultadoEvaluacion(idEvaluacion) {
                         <tr>
                             <th>Categoría</th>
                             <th style="text-align:center;">Puntaje</th>
-                            <th style="text-align:center;">Nivel de riesgo</th>
+                            <th style="text-align:center;">Nivel&nbsp;de&nbsp;riesgo</th>
                         </tr>
                         ${data.categorias.map(c => `
                             <tr>
@@ -1761,7 +1778,7 @@ async function verResultadoEvaluacion(idEvaluacion) {
                         <tr>
                             <th>Dominio</th>
                             <th style="text-align:center;">Puntaje</th>
-                            <th style="text-align:center;">Nivel de riesgo</th>
+                            <th style="text-align:center;">Nivel&nbsp;de&nbsp;riesgo</th>
                         </tr>
                         ${data.dominios.map(d => `
                             <tr>
@@ -1771,11 +1788,75 @@ async function verResultadoEvaluacion(idEvaluacion) {
                             </tr>
                         `).join('')}
                     </table>
-                ` : '<p>No hay resultados disponibles.</p>'}
+                ` : '<p>No&nbsp;hay&nbsp;resultados&nbsp;disponibles.</p>'}
             </div>
         `;
         formContainer.innerHTML = html;
         document.getElementById('back-btn-resultado').addEventListener('click', mostrarReportes);
+        document.getElementById('btn-imprimir-resultado').addEventListener('click', () => {
+            window.print();
+        });
+
+        document.getElementById('btn-guardar-pdf').addEventListener('click', async () => {
+            const areaOriginal = document.getElementById('area-imprimir');
+
+            // Crear contenedor oculto
+            const contenedorOculto = document.createElement('div');
+            contenedorOculto.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; background: white; z-index: -1;';
+            document.body.appendChild(contenedorOculto);
+
+            // Clonar el área
+            const clon = areaOriginal.cloneNode(true);
+            clon.id = 'area-imprimir-clon';
+            clon.classList.add('pdf-generando');
+            contenedorOculto.appendChild(clon);
+
+            // Mostrar logo negro y ocultar blanco
+            const logoBlanco = clon.querySelector('.logo-blanco');
+            const logoNegro = clon.querySelector('.logo-negro');
+            if (logoBlanco && logoNegro) {
+                logoBlanco.style.display = 'none';
+                logoNegro.style.display = 'block';
+            }
+            const logoCont = clon.querySelector('#logo-impresion');
+            if (logoCont) {
+                logoCont.style.display = 'flex';
+                logoCont.style.justifyContent = 'flex-end';
+                logoCont.style.margin = '0 0 20px 0';
+                logoCont.style.background = 'white';
+            }
+
+            // Forzar estilos inline para evitar palabras pegadas
+            clon.style.whiteSpace = 'normal';
+            clon.style.wordSpacing = 'normal';
+            clon.style.letterSpacing = 'normal';
+            clon.querySelectorAll('*').forEach(el => {
+                el.style.whiteSpace = 'normal';
+                el.style.wordSpacing = 'normal';
+                el.style.letterSpacing = 'normal';
+                el.style.color = 'black';
+                el.style.background = 'transparent';
+            });
+            clon.style.background = 'white';
+            clon.style.padding = '20px';
+
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `Evaluacion_${idEvaluacion}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+            };
+
+            try {
+                await html2pdf().set(opt).from(clon).save();
+            } catch (err) {
+                alert('❌ Error al generar PDF: ' + err.message);
+            } finally {
+                contenedorOculto.remove();
+            }
+        });
+
         formContainer.classList.remove('hidden');
         reportContainer.classList.add('hidden');
     } catch (err) {

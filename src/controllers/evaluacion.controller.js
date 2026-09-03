@@ -397,6 +397,19 @@ const getResultados = async (req, res, next) => {
         const { id } = req.params;
         const pool = getPool();
 
+        // Obtener nombre del empleado y fecha
+        const empleadoResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT emp.nombre AS empleado_nombre, e.fecha_aplicacion
+                FROM EVALUACION e
+                JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+                WHERE e.id_evaluacion = @id
+            `);
+        const info = empleadoResult.recordset[0] || {};
+        const empleado_nombre = info.empleado_nombre || 'No disponible';
+        const fecha_finalizacion = info.fecha_aplicacion ? new Date(info.fecha_aplicacion).toLocaleDateString() : 'No disponible';
+
         const global = await pool.request()
             .input('id', sql.Int, id)
             .query('SELECT * FROM RESULTADO_GLOBAL WHERE id_evaluacion = @id');
@@ -426,7 +439,9 @@ const getResultados = async (req, res, next) => {
         res.json({
             global: global.recordset[0] || null,
             categorias: categorias.recordset || [],
-            dominios: dominios.recordset || []
+            dominios: dominios.recordset || [],
+            empleado_nombre,
+            fecha_finalizacion
         });
     } catch (err) {
         next(err);
