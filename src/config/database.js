@@ -1,572 +1,73 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const fs = require('fs');
-const bcrypt = require('bcryptjs');
+const { getDB } = require('../config/database');
 
-let db = null;
-
-const connectDB = () => {
-    return new Promise((resolve, reject) => {
-        if (db) return resolve(db);
-
-        const dbPath = path.join(__dirname, '../../data/nom035.db');
-        fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-
-        db = new sqlite3.Database(dbPath, async (err) => {
-            if (err) {
-                console.error('❌ Error al conectar a SQLite:', err.message);
-                return reject(err);
-            }
-            console.log('✅ Conectado a SQLite');
-            try {
-                await inicializarBaseDeDatos(db);
-                console.log('✅ Base de datos inicializada con tablas y datos');
-                resolve(db);
-            } catch (initErr) {
-                console.error('❌ Error al inicializar la base:', initErr.message);
-                reject(initErr);
-            }
-        });
-    });
+const findByEmail = (email) => {
+    const db = getDB();
+    return db.prepare('SELECT * FROM USUARIO WHERE email = ?').get(email);
 };
 
-const getDB = () => {
-    if (!db) throw new Error('La conexión a SQLite no está inicializada.');
-    return db;
+const findById = (id) => {
+    const db = getDB();
+    return db.prepare(`
+        SELECT u.*, r.nombre_rol, e.*
+        FROM USUARIO u
+        LEFT JOIN ROL r ON u.id_rol = r.id_rol
+        LEFT JOIN EMPLEADO e ON u.id_empleado = e.id_empleado
+        WHERE u.id_usuario = ?
+    `).get(id);
 };
 
-// ============================================================
-// FUNCIONES DE CLASIFICACIÓN
-// ============================================================
-function clasificarGlobal(puntaje) {
-    if (puntaje < 50) return 'Nulo';
-    if (puntaje < 75) return 'Bajo';
-    if (puntaje < 99) return 'Medio';
-    if (puntaje < 140) return 'Alto';
-    return 'Muy Alto';
-}
+const findAll = () => {
+    const db = getDB();
+    return db.prepare(`
+        SELECT u.*, r.nombre_rol 
+        FROM USUARIO u
+        LEFT JOIN ROL r ON u.id_rol = r.id_rol
+    `).all();
+};
 
-function clasificarCategoria(id_categoria, puntaje) {
-    const umbrales = {
-        1: [5, 9, 11, 14],
-        2: [15, 30, 45, 60],
-        3: [5, 7, 10, 13],
-        4: [14, 29, 42, 58],
-        5: [10, 14, 18, 23]
-    };
-    const u = umbrales[id_categoria];
-    if (!u) return 'Nulo';
-    if (puntaje < u[0]) return 'Nulo';
-    if (puntaje < u[1]) return 'Bajo';
-    if (puntaje < u[2]) return 'Medio';
-    if (puntaje < u[3]) return 'Alto';
-    return 'Muy Alto';
-}
+const create = ({ nombre, email, contraseña_hash, departamento, id_rol }) => {
+    const db = getDB();
+    const result = db.prepare(`
+        INSERT INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol)
+        VALUES (?, ?, ?, ?, ?)
+    `).run(nombre, email, contraseña_hash, departamento, id_rol || 3);
+    return result.lastInsertRowid;
+};
 
-function clasificarDominio(id_dominio, puntaje) {
-    const umbrales = {
-        1: [5, 9, 11, 14],
-        2: [15, 21, 27, 37],
-        3: [11, 16, 21, 25],
-        4: [1, 2, 4, 6],
-        5: [4, 6, 8, 10],
-        6: [9, 12, 16, 20],
-        7: [10, 13, 17, 21],
-        8: [7, 10, 13, 16],
-        9: [6, 10, 14, 18],
-        10: [4, 6, 8, 10]
-    };
-    const u = umbrales[id_dominio];
-    if (!u) return 'Nulo';
-    if (puntaje < u[0]) return 'Nulo';
-    if (puntaje < u[1]) return 'Bajo';
-    if (puntaje < u[2]) return 'Medio';
-    if (puntaje < u[3]) return 'Alto';
-    return 'Muy Alto';
-}
+const updateRole = (id_usuario, id_rol) => {
+    const db = getDB();
+    db.prepare('UPDATE USUARIO SET id_rol = ? WHERE id_usuario = ?').run(id_rol, id_usuario);
+    return findById(id_usuario);
+};
 
-// ============================================================
-// INICIALIZAR BASE DE DATOS
-// ============================================================
-async function inicializarBaseDeDatos(db) {
-    // ========== CREAR TABLAS ==========
-    const createTables = `
-        CREATE TABLE IF NOT EXISTS ROL (
-            id_rol INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre_rol TEXT NOT NULL,
-            status_permiso INTEGER
-        );
-        CREATE TABLE IF NOT EXISTS USUARIO (
-            id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
-            departamento TEXT,
-            contraseña_hash TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            oauth_provider TEXT,
-            oauth_id TEXT,
-            fecha_creacion TEXT DEFAULT CURRENT_TIMESTAMP,
-            id_rol INTEGER NOT NULL,
-            id_empleado INTEGER,
-            FOREIGN KEY (id_rol) REFERENCES ROL(id_rol)
-        );
-        CREATE TABLE IF NOT EXISTS EMPLEADO (
-            id_empleado INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
-            sexo TEXT,
-            edad INTEGER,
-            estado_civil TEXT,
-            nivel_estudios TEXT,
-            ocupacion_profesion_puesto TEXT,
-            departamento_seccion_area TEXT,
-            tipo_puesto TEXT,
-            tipo_contratacion TEXT,
-            tipo_personal TEXT,
-            tipo_jornada TEXT,
-            rotacion_turno INTEGER,
-            tiempo_exp_puesto INTEGER,
-            tiempo_exp_laboral INTEGER,
-            email TEXT UNIQUE
-        );
-        CREATE TABLE IF NOT EXISTS EVALUACION (
-            id_evaluacion INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_empleado INTEGER NOT NULL,
-            fecha_aplicacion TEXT DEFAULT CURRENT_TIMESTAMP,
-            estatus TEXT NOT NULL,
-            requiere_canalizacion INTEGER DEFAULT 0,
-            FOREIGN KEY (id_empleado) REFERENCES EMPLEADO(id_empleado)
-        );
-        CREATE TABLE IF NOT EXISTS CATEGORIA (
-            id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS DOMINIO (
-            id_dominio INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_categoria INTEGER NOT NULL,
-            nombre TEXT NOT NULL,
-            FOREIGN KEY (id_categoria) REFERENCES CATEGORIA(id_categoria)
-        );
-        CREATE TABLE IF NOT EXISTS DIMENSION (
-            id_dimension INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_dominio INTEGER NOT NULL,
-            nombre TEXT NOT NULL,
-            FOREIGN KEY (id_dominio) REFERENCES DOMINIO(id_dominio)
-        );
-        CREATE TABLE IF NOT EXISTS PREGUNTA (
-            id_pregunta INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_dimension INTEGER NOT NULL,
-            numero INTEGER NOT NULL,
-            texto TEXT,
-            tipo_puntaje TEXT NOT NULL,
-            FOREIGN KEY (id_dimension) REFERENCES DIMENSION(id_dimension)
-        );
-        CREATE TABLE IF NOT EXISTS PREGUNTA_GUIA_I (
-            id_pregunta_guia_i INTEGER PRIMARY KEY AUTOINCREMENT,
-            numero INTEGER NOT NULL,
-            texto TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS RESPUESTA (
-            id_evaluacion INTEGER NOT NULL,
-            id_pregunta INTEGER NOT NULL,
-            valor_escogido INTEGER NOT NULL,
-            PRIMARY KEY (id_evaluacion, id_pregunta),
-            FOREIGN KEY (id_evaluacion) REFERENCES EVALUACION(id_evaluacion),
-            FOREIGN KEY (id_pregunta) REFERENCES PREGUNTA(id_pregunta)
-        );
-        CREATE TABLE IF NOT EXISTS RESPUESTA_GUIA_I (
-            id_respuesta_guia_i INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_evaluacion INTEGER NOT NULL,
-            id_pregunta_guia_i INTEGER NOT NULL,
-            respuesta INTEGER NOT NULL,
-            FOREIGN KEY (id_evaluacion) REFERENCES EVALUACION(id_evaluacion),
-            FOREIGN KEY (id_pregunta_guia_i) REFERENCES PREGUNTA_GUIA_I(id_pregunta_guia_i)
-        );
-        CREATE TABLE IF NOT EXISTS RESULTADO_GLOBAL (
-            id_resultado_global INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_evaluacion INTEGER NOT NULL,
-            puntaje_bruto INTEGER NOT NULL,
-            puntaje_maximo INTEGER NOT NULL,
-            puntaje_porcentaje REAL,
-            resultado_final TEXT,
-            FOREIGN KEY (id_evaluacion) REFERENCES EVALUACION(id_evaluacion)
-        );
-        CREATE TABLE IF NOT EXISTS RESULTADO_CATEGORIA (
-            id_resultado_cat INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_evaluacion INTEGER NOT NULL,
-            id_categoria INTEGER NOT NULL,
-            puntaje_bruto INTEGER NOT NULL,
-            puntaje_maximo INTEGER NOT NULL,
-            puntaje_porcentaje REAL,
-            nivel_riesgo TEXT,
-            FOREIGN KEY (id_evaluacion) REFERENCES EVALUACION(id_evaluacion),
-            FOREIGN KEY (id_categoria) REFERENCES CATEGORIA(id_categoria)
-        );
-        CREATE TABLE IF NOT EXISTS RESULTADO_DOMINIO (
-            id_resultado_dom INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_evaluacion INTEGER NOT NULL,
-            id_dominio INTEGER NOT NULL,
-            puntaje_bruto INTEGER NOT NULL,
-            puntaje_maximo INTEGER NOT NULL,
-            puntaje_porcentaje REAL,
-            nivel_riesgo TEXT,
-            FOREIGN KEY (id_evaluacion) REFERENCES EVALUACION(id_evaluacion),
-            FOREIGN KEY (id_dominio) REFERENCES DOMINIO(id_dominio)
-        );
-    `;
+const remove = (id_usuario) => {
+    const db = getDB();
+    const info = db.prepare('DELETE FROM USUARIO WHERE id_usuario = ?').run(id_usuario);
+    return info.changes > 0;
+};
 
-    await new Promise((resolve, reject) => {
-        db.exec(createTables, (err) => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
+const existsEmail = (email) => {
+    const db = getDB();
+    const row = db.prepare('SELECT id_usuario FROM USUARIO WHERE email = ?').get(email);
+    return !!row;
+};
 
-    // ========== DATOS SEMILLA ==========
-    const insert = (sql, params = []) => {
-        return new Promise((resolve, reject) => {
-            db.run(sql, params, function(err) {
-                if (err) reject(err);
-                else resolve(this);
-            });
-        });
-    };
-
-    // Roles
-    await insert(`INSERT OR IGNORE INTO ROL (id_rol, nombre_rol) VALUES (1, 'Administrador')`);
-    await insert(`INSERT OR IGNORE INTO ROL (id_rol, nombre_rol) VALUES (2, 'Supervisor')`);
-    await insert(`INSERT OR IGNORE INTO ROL (id_rol, nombre_rol) VALUES (3, 'Empleado')`);
-
-    // Categorías
-    const categorias = [
-        [1, 'Ambiente de trabajo'],
-        [2, 'Factores propios de la actividad'],
-        [3, 'Organización del tiempo de trabajo'],
-        [4, 'Liderazgo y relaciones en el trabajo'],
-        [5, 'Entorno organizacional']
-    ];
-    for (const c of categorias) {
-        await insert(`INSERT OR IGNORE INTO CATEGORIA (id_categoria, nombre) VALUES (?, ?)`, c);
+const update = (id_usuario, fields) => {
+    const db = getDB();
+    const allowed = ['nombre', 'email', 'departamento', 'contraseña_hash', 'id_rol'];
+    const setClauses = [];
+    const values = [];
+    for (const key of allowed) {
+        if (fields[key] !== undefined && fields[key] !== null) {
+            setClauses.push(`${key} = ?`);
+            values.push(fields[key]);
+        }
     }
+    if (setClauses.length === 0) throw new Error('No hay campos para actualizar');
+    values.push(id_usuario);
+    const sql = `UPDATE USUARIO SET ${setClauses.join(', ')} WHERE id_usuario = ?`;
+    db.prepare(sql).run(...values);
+    return findById(id_usuario);
+};
 
-    // Dominios
-    const dominios = [
-        [1, 1, 'Condiciones en el ambiente de trabajo'],
-        [2, 2, 'Carga de trabajo'],
-        [3, 2, 'Falta de control sobre el trabajo'],
-        [4, 3, 'Jornada de trabajo'],
-        [5, 3, 'Interferencia en la relación trabajo-familia'],
-        [6, 4, 'Liderazgo'],
-        [7, 4, 'Relaciones en el trabajo'],
-        [8, 4, 'Violencia'],
-        [9, 5, 'Reconocimiento del desempeño'],
-        [10, 5, 'Insuficiente sentido de pertenencia e inestabilidad']
-    ];
-    for (const d of dominios) {
-        await insert(`INSERT OR IGNORE INTO DOMINIO (id_dominio, id_categoria, nombre) VALUES (?, ?, ?)`, d);
-    }
-
-    // Dimensiones
-    const dimensiones = [
-        [1, 1, 'Condiciones peligrosas e inseguras'],
-        [2, 1, 'Condiciones deficientes e insalubres'],
-        [3, 1, 'Trabajos peligrosos'],
-        [4, 2, 'Cargas cuantitativas'],
-        [5, 2, 'Ritmos de trabajo acelerado'],
-        [6, 2, 'Carga mental'],
-        [7, 2, 'Cargas psicológicas emocionales'],
-        [8, 2, 'Cargas de alta responsabilidad'],
-        [9, 2, 'Cargas contradictorias o inconsistentes'],
-        [10, 3, 'Falta de control y autonomía sobre el trabajo'],
-        [11, 3, 'Limitada o nula posibilidad de desarrollo'],
-        [12, 3, 'Insuficiente participación y manejo del cambio'],
-        [13, 3, 'Limitada o inexistente capacitación'],
-        [14, 4, 'Jornadas de trabajo extensas'],
-        [15, 5, 'Influencia del trabajo fuera del centro laboral'],
-        [16, 5, 'Influencia de las responsabilidades familiares'],
-        [17, 6, 'Escaza claridad de funciones'],
-        [18, 6, 'Características del liderazgo'],
-        [19, 7, 'Relaciones sociales en el trabajo'],
-        [20, 7, 'Deficiente relación con los colaboradores que supervisa'],
-        [21, 8, 'Violencia laboral'],
-        [22, 9, 'Escasa o nula retroalimentación del desempeño'],
-        [23, 9, 'Escaso o nulo reconocimiento o compensación'],
-        [24, 10, 'Limitado sentido de pertenencia'],
-        [25, 10, 'Inestabilidad laboral']
-    ];
-    for (const d of dimensiones) {
-        await insert(`INSERT OR IGNORE INTO DIMENSION (id_dimension, id_dominio, nombre) VALUES (?, ?, ?)`, d);
-    }
-
-    // Preguntas Guía I
-    const preguntasGuiaI = [
-        [1, '¿Ha presenciado o sufrido alguna vez, durante o con motivo del trabajo, un accidente que tenga como consecuencia la muerte, la pérdida de un miembro o una lesión grave?'],
-        [2, '¿Ha sufrido asaltos durante o con motivo del trabajo?'],
-        [3, '¿Ha presenciado o sufrido actos violentos que derivaron en lesiones graves?'],
-        [4, '¿Ha sido víctima de secuestro durante o con motivo del trabajo?'],
-        [5, '¿Ha recibido amenazas durante o con motivo del trabajo?'],
-        [6, '¿Ha vivido cualquier otro acontecimiento que ponga en riesgo su vida o salud, y/o la de otras personas?'],
-        [7, '¿Ha tenido recuerdos recurrentes sobre el acontecimiento que le provocan malestares?'],
-        [8, '¿Ha tenido sueños de carácter recurrente sobre el acontecimiento que le producen malestar?'],
-        [9, '¿Se ha esforzado por evitar todo tipo de sentimientos, conversaciones o situaciones que le puedan recordar el acontecimiento?'],
-        [10, '¿Se ha esforzado por evitar todo tipo de actividades, lugares o personas que motivan recuerdos del acontecimiento?'],
-        [11, '¿Ha tenido dificultad para recordar alguna parte importante del evento?'],
-        [12, '¿Ha disminuido su interés en sus actividades cotidianas?'],
-        [13, '¿Se ha sentido usted alejado o distante de los demás?'],
-        [14, '¿Ha notado que tiene dificultad para expresar sus sentimientos?'],
-        [15, '¿Ha tenido la impresión de que su vida se va a acortar, que va a morir antes que otras personas o que tiene un futuro limitado?'],
-        [16, '¿Ha tenido usted dificultades para dormir?'],
-        [17, '¿Ha estado particularmente irritable o le han dado arranques de coraje?'],
-        [18, '¿Ha tenido dificultad para concentrarse?'],
-        [19, '¿Ha estado nervioso o constantemente en alerta?'],
-        [20, '¿Se ha sobresaltado fácilmente por cualquier cosa?']
-    ];
-    for (const p of preguntasGuiaI) {
-        await insert(`INSERT OR IGNORE INTO PREGUNTA_GUIA_I (numero, texto) VALUES (?, ?)`, p);
-    }
-
-    // Preguntas Guía III (72 ítems)
-    const preguntasIII = [
-        [1, 1, 'El espacio donde trabajo me permite realizar mis actividades de manera segura e higiénica', 'INVERSO'],
-        [2, 1, 'Mi trabajo me exige hacer mucho esfuerzo físico', 'DIRECTO'],
-        [3, 1, 'Me preocupa sufrir un accidente en mi trabajo', 'DIRECTO'],
-        [4, 2, 'Considero que en mi trabajo se aplican las normas de seguridad y salud en el trabajo', 'INVERSO'],
-        [5, 3, 'Considero que las actividades que realizo son peligrosas', 'DIRECTO'],
-        [6, 4, 'Por la cantidad de trabajo que tengo debo quedarme tiempo adicional a mi turno', 'DIRECTO'],
-        [7, 5, 'Por la cantidad de trabajo que tengo debo trabajar sin parar', 'DIRECTO'],
-        [8, 5, 'Considero que es necesario mantener un ritmo de trabajo acelerado', 'DIRECTO'],
-        [9, 6, 'Mi trabajo exige que esté muy concentrado', 'DIRECTO'],
-        [10, 6, 'Mi trabajo requiere que memorice mucha información', 'DIRECTO'],
-        [11, 6, 'En mi trabajo tengo que tomar decisiones difíciles muy rápido', 'DIRECTO'],
-        [12, 4, 'Mi trabajo exige que atienda varios asuntos al mismo tiempo', 'DIRECTO'],
-        [13, 8, 'En mi trabajo soy responsable de cosas de mucho valor', 'DIRECTO'],
-        [14, 8, 'Respondo ante mi jefe por los resultados de toda mi área de trabajo', 'DIRECTO'],
-        [15, 9, 'En el trabajo me dan órdenes contradictorias', 'DIRECTO'],
-        [16, 9, 'Considero que en mi trabajo me piden hacer cosas innecesarias', 'DIRECTO'],
-        [17, 14, 'Trabajo horas extras más de tres veces a la semana', 'DIRECTO'],
-        [18, 14, 'Mi trabajo me exige laborar en días de descanso, festivos o fines de semana', 'DIRECTO'],
-        [19, 15, 'Considero que el tiempo en el trabajo es mucho y perjudica mis actividades familiares o personales', 'DIRECTO'],
-        [20, 15, 'Debo atender asuntos de trabajo cuando estoy en casa', 'DIRECTO'],
-        [21, 16, 'Pienso en las actividades familiares o personales cuando estoy en mi trabajo', 'DIRECTO'],
-        [22, 16, 'Pienso que mis responsabilidades familiares afectan mi trabajo', 'DIRECTO'],
-        [23, 11, 'Mi trabajo permite que desarrolle nuevas habilidades', 'INVERSO'],
-        [24, 11, 'En mi trabajo puedo aspirar a un mejor puesto', 'INVERSO'],
-        [25, 10, 'Durante mi jornada de trabajo puedo tomar pausas cuando las necesito', 'INVERSO'],
-        [26, 10, 'Puedo decidir cuánto trabajo realizo durante la jornada laboral', 'INVERSO'],
-        [27, 10, 'Puedo decidir la velocidad a la que realizo mis actividades en mi trabajo', 'INVERSO'],
-        [28, 10, 'Puedo cambiar el orden de las actividades que realizo en mi trabajo', 'INVERSO'],
-        [29, 12, 'Los cambios que se presentan en mi trabajo dificultan mi labor', 'DIRECTO'],
-        [30, 12, 'Cuando se presentan cambios en mi trabajo se tienen en cuenta mis ideas o aportaciones', 'INVERSO'],
-        [31, 17, 'Me informan con claridad cuáles son mis funciones', 'INVERSO'],
-        [32, 17, 'Me explican claramente los resultados que debo obtener en mi trabajo', 'INVERSO'],
-        [33, 17, 'Me explican claramente los objetivos de mi trabajo', 'INVERSO'],
-        [34, 17, 'Me informan con quién puedo resolver problemas o asuntos de trabajo', 'INVERSO'],
-        [35, 13, 'Me permiten asistir a capacitaciones relacionadas con mi trabajo', 'INVERSO'],
-        [36, 13, 'Recibo capacitación útil para hacer mi trabajo', 'INVERSO'],
-        [37, 18, 'Mi jefe ayuda a organizar mejor el trabajo', 'INVERSO'],
-        [38, 18, 'Mi jefe tiene en cuenta mis puntos de vista y opiniones', 'INVERSO'],
-        [39, 18, 'Mi jefe me comunica a tiempo la información relacionada con el trabajo', 'INVERSO'],
-        [40, 18, 'La orientación que me da mi jefe me ayuda a realizar mejor mi trabajo', 'INVERSO'],
-        [41, 18, 'Mi jefe ayuda a solucionar los problemas que se presentan en el trabajo', 'INVERSO'],
-        [42, 19, 'Puedo confiar en mis compañeros de trabajo', 'INVERSO'],
-        [43, 19, 'Entre compañeros solucionamos los problemas de trabajo de forma respetuosa', 'INVERSO'],
-        [44, 19, 'En mi trabajo me hacen sentir parte del grupo', 'INVERSO'],
-        [45, 19, 'Cuando tenemos que realizar trabajo de equipo los compañeros colaboran', 'INVERSO'],
-        [46, 19, 'Mis compañeros de trabajo me ayudan cuando tengo dificultades', 'INVERSO'],
-        [47, 22, 'Me informan sobre lo que hago bien en mi trabajo', 'INVERSO'],
-        [48, 22, 'La forma como evalúan mi trabajo en mi centro de trabajo me ayuda a mejorar mi desempeño', 'INVERSO'],
-        [49, 23, 'En mi centro de trabajo me pagan a tiempo mi salario', 'INVERSO'],
-        [50, 23, 'El pago que recibo es el que merezco por el trabajo que realizo', 'INVERSO'],
-        [51, 23, 'Si obtengo los resultados esperados en mi trabajo me recompensan o reconocen', 'INVERSO'],
-        [52, 23, 'Las personas que hacen bien el trabajo pueden crecer laboralmente', 'INVERSO'],
-        [53, 25, 'Considero que mi trabajo es estable', 'INVERSO'],
-        [54, 25, 'En mi trabajo existe continua rotación de personal', 'DIRECTO'],
-        [55, 24, 'Siento orgullo de laborar en este centro de trabajo', 'INVERSO'],
-        [56, 24, 'Me siento comprometido con mi trabajo', 'INVERSO'],
-        [57, 21, 'En mi trabajo puedo expresarme libremente sin interrupciones', 'INVERSO'],
-        [58, 21, 'Recibo críticas constantes a mi persona y/o trabajo', 'DIRECTO'],
-        [59, 21, 'Recibo burlas, calumnias, difamaciones, humillaciones o ridiculizaciones', 'DIRECTO'],
-        [60, 21, 'Se ignora mi presencia o se me excluye de las reuniones de trabajo y en la toma de decisiones', 'DIRECTO'],
-        [61, 21, 'Se manipulan las situaciones de trabajo para hacerme parecer un mal trabajador', 'DIRECTO'],
-        [62, 21, 'Se ignoran mis éxitos laborales y se atribuyen a otros trabajadores', 'DIRECTO'],
-        [63, 21, 'Me bloquean o impiden las oportunidades que tengo para obtener ascenso o mejora en mi trabajo', 'DIRECTO'],
-        [64, 21, 'He presenciado actos de violencia en mi centro de trabajo', 'DIRECTO'],
-        [65, 7, 'Atiendo clientes o usuarios muy enojados', 'DIRECTO'],
-        [66, 7, 'Mi trabajo me exige atender personas muy necesitadas de ayuda o enfermas', 'DIRECTO'],
-        [67, 7, 'Para hacer mi trabajo debo demostrar sentimientos distintos a los míos', 'DIRECTO'],
-        [68, 7, 'Mi trabajo me exige atender situaciones de violencia', 'DIRECTO'],
-        [69, 20, 'Comunican tarde los asuntos de trabajo', 'DIRECTO'],
-        [70, 20, 'Dificultan el logro de los resultados del trabajo', 'DIRECTO'],
-        [71, 20, 'Cooperan poco cuando se necesita', 'DIRECTO'],
-        [72, 20, 'Ignoran las sugerencias para mejorar su trabajo', 'DIRECTO']
-    ];
-    for (const p of preguntasIII) {
-        await insert(`INSERT OR IGNORE INTO PREGUNTA (id_dimension, numero, texto, tipo_puntaje) VALUES (?, ?, ?, ?)`, p);
-    }
-
-    // Usuario administrador
-    const hashAdmin = await bcrypt.hash('admin123', 10);
-    await insert(`INSERT OR IGNORE INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol) VALUES ('Administrador', 'admin@nom035.com', ?, 'Sistemas', 1)`, [hashAdmin]);
-
-    // ============================================================
-    // CREAR USUARIOS Y EVALUACIONES DE PRUEBA (5 niveles)
-    // ============================================================
-    const niveles = [
-        { nombre: 'Nulo', total: 20, email: 'nulo@nom035.com' },
-        { nombre: 'Bajo', total: 60, email: 'bajo@nom035.com' },
-        { nombre: 'Medio', total: 85, email: 'medio@nom035.com' },
-        { nombre: 'Alto', total: 120, email: 'alto@nom035.com' },
-        { nombre: 'Muy Alto', total: 170, email: 'muyalto@nom035.com' }
-    ];
-
-    const passwordPrueba = '123456';
-
-    // Mapeo de tipo de pregunta por número
-    const tipoPorNumero = {};
-    preguntasIII.forEach(p => {
-        tipoPorNumero[p[1]] = p[3]; // p[1]=numero, p[3]=tipo_puntaje
-    });
-
-    for (const nivel of niveles) {
-        const hash = await bcrypt.hash(passwordPrueba, 10);
-
-        // Insertar empleado
-        await insert('INSERT OR IGNORE INTO EMPLEADO (nombre, email, departamento_seccion_area) VALUES (?, ?, ?)',
-            ['X Prueba ' + nivel.nombre, nivel.email, 'Pruebas']);
-        const empRow = await new Promise((resolve, reject) => {
-            db.get('SELECT id_empleado FROM EMPLEADO WHERE email = ?', [nivel.email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-        const empId = empRow ? empRow.id_empleado : null;
-
-        // Insertar usuario
-        await insert('INSERT OR IGNORE INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol, id_empleado) VALUES (?, ?, ?, ?, 3, ?)',
-            ['X Prueba ' + nivel.nombre, nivel.email, hash, 'Pruebas', empId]);
-
-        // Verificar si ya existe evaluación completada
-        const existEval = await new Promise((resolve, reject) => {
-            db.get('SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = ? AND estatus = ?', [empId, 'Completada'], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-        if (existEval) continue;
-
-        // Crear evaluación completada
-        const idEvaluacion = await new Promise((resolve, reject) => {
-            db.run('INSERT INTO EVALUACION (id_empleado, estatus, fecha_aplicacion) VALUES (?, ?, datetime(\'now\'))',
-                [empId, 'Completada'], function(err) { if (err) reject(err); else resolve(this.lastID); });
-        });
-
-        // Generar puntajes exactos para el total deseado
-        const puntajes = new Array(64).fill(0);
-        if (nivel.total === 20) {
-            const pos = [0, 5, 10, 15, 20];
-            pos.forEach(i => { if (i < 64) puntajes[i] = 4; });
-        } else if (nivel.total === 60) {
-            const pos = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61];
-            pos.forEach(i => { if (i < 64) puntajes[i] = 4; });
-        } else if (nivel.total === 85) {
-            const pos = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62];
-            pos.forEach(i => { if (i < 64) puntajes[i] = 4; });
-            for (let i = 0; i < 64; i += 3) {
-                if (puntajes[i] < 4) puntajes[i] = Math.min(4, puntajes[i] + 2);
-            }
-        } else if (nivel.total === 120) {
-            for (let i = 0; i < 64; i += 2) puntajes[i] = 3;
-            for (let i = 1; i < 64; i += 4) puntajes[i] = 4;
-        } else if (nivel.total === 170) {
-            for (let i = 0; i < 64; i++) puntajes[i] = 4;
-        }
-
-        const calcularTotal = (arr) => {
-            let total = 0;
-            for (let i = 0; i < 64; i++) {
-                const numero = i + 1;
-                const tipo = tipoPorNumero[numero] || 'DIRECTO';
-                const valorCrudo = (tipo === 'INVERSO') ? 4 - arr[i] : arr[i];
-                total += (tipo === 'INVERSO') ? 4 - valorCrudo : valorCrudo;
-            }
-            return total;
-        };
-        let totalActual = calcularTotal(puntajes);
-        while (totalActual !== nivel.total) {
-            if (totalActual < nivel.total) {
-                for (let i = 0; i < 64; i++) {
-                    const numero = i + 1;
-                    const tipo = tipoPorNumero[numero] || 'DIRECTO';
-                    if (tipo === 'DIRECTO' && puntajes[i] < 4) { puntajes[i]++; totalActual = calcularTotal(puntajes); break; }
-                    if (tipo === 'INVERSO' && puntajes[i] > 0) { puntajes[i]--; totalActual = calcularTotal(puntajes); break; }
-                }
-            } else {
-                for (let i = 0; i < 64; i++) {
-                    const numero = i + 1;
-                    const tipo = tipoPorNumero[numero] || 'DIRECTO';
-                    if (tipo === 'DIRECTO' && puntajes[i] > 0) { puntajes[i]--; totalActual = calcularTotal(puntajes); break; }
-                    if (tipo === 'INVERSO' && puntajes[i] < 4) { puntajes[i]++; totalActual = calcularTotal(puntajes); break; }
-                }
-            }
-        }
-
-        const valoresCrudos = new Array(64).fill(0);
-        for (let i = 0; i < 64; i++) {
-            const numero = i + 1;
-            const tipo = tipoPorNumero[numero] || 'DIRECTO';
-            valoresCrudos[i] = (tipo === 'INVERSO') ? 4 - puntajes[i] : puntajes[i];
-        }
-
-        for (let i = 0; i < 64; i++) {
-            await insert('INSERT OR REPLACE INTO RESPUESTA (id_evaluacion, id_pregunta, valor_escogido) VALUES (?, ?, ?)',
-                [idEvaluacion, i + 1, valoresCrudos[i]]);
-        }
-
-        const preguntasConCat = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT p.numero, p.id_dimension, d.id_dominio, dom.id_categoria
-                FROM PREGUNTA p
-                JOIN DIMENSION d ON p.id_dimension = d.id_dimension
-                JOIN DOMINIO dom ON d.id_dominio = dom.id_dominio
-                WHERE p.numero BETWEEN 1 AND 64
-            `, (err, rows) => { if (err) reject(err); else resolve(rows || []); });
-        });
-
-        const catPuntajes = {};
-        const domPuntajes = {};
-        let totalGlobal = 0;
-
-        for (const p of preguntasConCat) {
-            const numero = p.numero;
-            const tipo = tipoPorNumero[numero] || 'DIRECTO';
-            const valorCrudo = valoresCrudos[numero - 1];
-            const puntaje = (tipo === 'INVERSO') ? 4 - valorCrudo : valorCrudo;
-
-            if (!catPuntajes[p.id_categoria]) catPuntajes[p.id_categoria] = { bruto: 0, maximo: 0 };
-            if (!domPuntajes[p.id_dominio]) domPuntajes[p.id_dominio] = { bruto: 0, maximo: 0 };
-
-            catPuntajes[p.id_categoria].bruto += puntaje;
-            catPuntajes[p.id_categoria].maximo += 4;
-            domPuntajes[p.id_dominio].bruto += puntaje;
-            domPuntajes[p.id_dominio].maximo += 4;
-            totalGlobal += puntaje;
-        }
-
-        await insert('INSERT INTO RESULTADO_GLOBAL (id_evaluacion, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, resultado_final) VALUES (?, ?, ?, ?, ?)',
-            [idEvaluacion, totalGlobal, 256, (totalGlobal/256)*100, clasificarGlobal(totalGlobal)]);
-
-        for (const [idCat, datos] of Object.entries(catPuntajes)) {
-            const nivelRiesgo = clasificarCategoria(parseInt(idCat), datos.bruto);
-            await insert('INSERT INTO RESULTADO_CATEGORIA (id_evaluacion, id_categoria, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo) VALUES (?, ?, ?, ?, ?, ?)',
-                [idEvaluacion, parseInt(idCat), datos.bruto, datos.maximo, (datos.bruto/datos.maximo)*100, nivelRiesgo]);
-        }
-
-        for (const [idDom, datos] of Object.entries(domPuntajes)) {
-            const nivelRiesgo = clasificarDominio(parseInt(idDom), datos.bruto);
-            await insert('INSERT INTO RESULTADO_DOMINIO (id_evaluacion, id_dominio, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo) VALUES (?, ?, ?, ?, ?, ?)',
-                [idEvaluacion, parseInt(idDom), datos.bruto, datos.maximo, (datos.bruto/datos.maximo)*100, nivelRiesgo]);
-        }
-
-        console.log(`✅ Creada evaluación ${nivel.nombre} con puntaje ${totalGlobal}`);
-    }
-}
-
-module.exports = { connectDB, getDB };
+module.exports = { findByEmail, findById, findAll, create, updateRole, remove, existsEmail, update };
