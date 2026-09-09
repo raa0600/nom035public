@@ -1,5 +1,5 @@
 const usuarioModel = require('../models/Usuario.model');
-const { getPool, sql } = require('../config/database');
+const { getDB } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
 // ---------- OBTENER TODOS LOS USUARIOS ----------
@@ -37,7 +37,6 @@ const getUsuarioById = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        // Omitir campos sensibles
         const { contraseña_hash, ...rest } = user;
         res.json(rest);
     } catch (err) {
@@ -46,30 +45,18 @@ const getUsuarioById = async (req, res, next) => {
 };
 
 // ---------- CREAR USUARIO (con empleado automático) ----------
-// ---------- CREAR USUARIO (con empleado automático) ----------
 const createUsuario = async (req, res, next) => {
     try {
         const {
-            nombre,
-            email,
-            password,
-            departamento,
-            id_rol,
-            sexo = null,
-            edad = null,
-            estado_civil = null,
-            nivel_estudios = null,
-            ocupacion_profesion_puesto = null,
-            tipo_puesto = null,
-            tipo_contratacion = null,
-            tipo_personal = null,
-            tipo_jornada = null,
-            rotacion_turno = null,
-            tiempo_exp_puesto = null,
+            nombre, email, password, departamento, id_rol,
+            sexo = null, edad = null, estado_civil = null,
+            nivel_estudios = null, ocupacion_profesion_puesto = null,
+            tipo_puesto = null, tipo_contratacion = null,
+            tipo_personal = null, tipo_jornada = null,
+            rotacion_turno = null, tiempo_exp_puesto = null,
             tiempo_exp_laboral = null
         } = req.body;
 
-        // Validaciones básicas
         if (!nombre || !email || !password) {
             return res.status(400).json({ error: 'Nombre, email y contraseña son requeridos' });
         }
@@ -79,41 +66,23 @@ const createUsuario = async (req, res, next) => {
             return res.status(400).json({ error: 'El email ya está registrado' });
         }
 
-        const pool = getPool();
+        const db = getDB();
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 1. Insertar en USUARIO
-        const resultUser = await pool.request()
-            .input('nombre', sql.NVarChar, nombre)
-            .input('email', sql.NVarChar, email)
-            .input('password', sql.NVarChar, hashedPassword)
-            .input('departamento', sql.NVarChar, departamento || null)
-            .input('rol', sql.Int, id_rol || 3)
-            .query(`
+        // Insertar usuario
+        const id_usuario = await new Promise((resolve, reject) => {
+            db.run(`
                 INSERT INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol)
-                VALUES (@nombre, @email, @password, @departamento, @rol);
-                SELECT SCOPE_IDENTITY() AS id;
-            `);
-        const id_usuario = resultUser.recordset[0].id;
+                VALUES (?, ?, ?, ?, ?)
+            `, [nombre, email, hashedPassword, departamento, id_rol || 3], function(err) {
+                if (err) reject(err);
+                else resolve(this.lastID);
+            });
+        });
 
-        // 2. Insertar en EMPLEADO con todos los campos
-        const resultEmpleado = await pool.request()
-            .input('nombre', sql.NVarChar, nombre)
-            .input('email', sql.NVarChar, email)
-            .input('departamento', sql.NVarChar, departamento || null)
-            .input('sexo', sql.NVarChar, sexo)
-            .input('edad', sql.Int, edad)
-            .input('estado_civil', sql.NVarChar, estado_civil)
-            .input('nivel_estudios', sql.NVarChar, nivel_estudios)
-            .input('ocupacion', sql.NVarChar, ocupacion_profesion_puesto)
-            .input('tipo_puesto', sql.NVarChar, tipo_puesto)
-            .input('tipo_contratacion', sql.NVarChar, tipo_contratacion)
-            .input('tipo_personal', sql.NVarChar, tipo_personal)
-            .input('tipo_jornada', sql.NVarChar, tipo_jornada)
-            .input('rotacion', sql.Bit, rotacion_turno)
-            .input('exp_puesto', sql.Int, tiempo_exp_puesto)
-            .input('exp_laboral', sql.Int, tiempo_exp_laboral)
-            .query(`
+        // Insertar empleado
+        const id_empleado = await new Promise((resolve, reject) => {
+            db.run(`
                 INSERT INTO EMPLEADO (
                     nombre, email, departamento_seccion_area,
                     sexo, edad, estado_civil, nivel_estudios,
@@ -121,24 +90,27 @@ const createUsuario = async (req, res, next) => {
                     tipo_personal, tipo_jornada, rotacion_turno,
                     tiempo_exp_puesto, tiempo_exp_laboral
                 )
-                VALUES (
-                    @nombre, @email, @departamento,
-                    @sexo, @edad, @estado_civil, @nivel_estudios,
-                    @ocupacion, @tipo_puesto, @tipo_contratacion,
-                    @tipo_personal, @tipo_jornada, @rotacion,
-                    @exp_puesto, @exp_laboral
-                );
-                SELECT SCOPE_IDENTITY() AS id;
-            `);
-        const id_empleado = resultEmpleado.recordset[0].id;
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                nombre, email, departamento || null,
+                sexo, edad, estado_civil, nivel_estudios,
+                ocupacion_profesion_puesto, tipo_puesto, tipo_contratacion,
+                tipo_personal, tipo_jornada, rotacion_turno,
+                tiempo_exp_puesto, tiempo_exp_laboral
+            ], function(err) {
+                if (err) reject(err);
+                else resolve(this.lastID);
+            });
+        });
 
-        // 3. Vincular USUARIO con EMPLEADO
-        await pool.request()
-            .input('id_usuario', sql.Int, id_usuario)
-            .input('id_empleado', sql.Int, id_empleado)
-            .query('UPDATE USUARIO SET id_empleado = @id_empleado WHERE id_usuario = @id_usuario');
+        // Vincular usuario con empleado
+        await new Promise((resolve, reject) => {
+            db.run('UPDATE USUARIO SET id_empleado = ? WHERE id_usuario = ?', [id_empleado, id_usuario], function(err) {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
 
-        // 4. Obtener usuario completo (sin contraseña)
         const newUser = await usuarioModel.findById(id_usuario);
         const { contraseña_hash, ...rest } = newUser;
         res.status(201).json(rest);
@@ -152,7 +124,6 @@ const updateRol = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { id_rol } = req.body;
-
         if (!id_rol) {
             return res.status(400).json({ error: 'id_rol es requerido' });
         }
@@ -171,11 +142,9 @@ const updateRol = async (req, res, next) => {
 };
 
 // ---------- ELIMINAR USUARIO (con eliminación manual en cascada) ----------
-// ---------- ELIMINAR USUARIO (con eliminación manual en cascada) ----------
 const deleteUsuario = async (req, res, next) => {
     try {
         const { id } = req.params;
-
         if (parseInt(id) === req.user.id) {
             return res.status(400).json({ error: 'No puedes eliminar tu propio usuario' });
         }
@@ -185,69 +154,72 @@ const deleteUsuario = async (req, res, next) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        const pool = getPool();
+        const db = getDB();
+        const id_empleado = user.id_empleado;
 
-        // 1. Obtener id_empleado del usuario
-        const empleadoResult = await pool.request()
-            .input('id_usuario', sql.Int, id)
-            .query('SELECT id_empleado FROM USUARIO WHERE id_usuario = @id_usuario');
-        
-        const id_empleado = empleadoResult.recordset[0]?.id_empleado;
+        // Eliminar usuario
+        await new Promise((resolve, reject) => {
+            db.run('DELETE FROM USUARIO WHERE id_usuario = ?', [id], function(err) {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
 
-        // 2. Eliminar el usuario (rompe la FK con EMPLEADO)
-        await usuarioModel.remove(parseInt(id));
-
-        // 3. Si el usuario tenía empleado, eliminar sus datos
+        // Si tenía empleado, eliminar todos sus datos
         if (id_empleado) {
-            // Eliminar respuestas de Guía I
-            await pool.request()
-                .input('id_empleado', sql.Int, id_empleado)
-                .query(`
-                    DELETE FROM RESPUESTA_GUIA_I 
-                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
-                `);
+            const evaluaciones = await new Promise((resolve, reject) => {
+                db.all('SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = ?', [id_empleado], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+            });
 
-            // Eliminar respuestas de Guía III
-            await pool.request()
-                .input('id_empleado', sql.Int, id_empleado)
-                .query(`
-                    DELETE FROM RESPUESTA 
-                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
-                `);
+            for (const e of evaluaciones) {
+                await new Promise((resolve, reject) => {
+                    db.run('DELETE FROM RESPUESTA WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+                await new Promise((resolve, reject) => {
+                    db.run('DELETE FROM RESPUESTA_GUIA_I WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+                await new Promise((resolve, reject) => {
+                    db.run('DELETE FROM RESULTADO_GLOBAL WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+                await new Promise((resolve, reject) => {
+                    db.run('DELETE FROM RESULTADO_CATEGORIA WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+                await new Promise((resolve, reject) => {
+                    db.run('DELETE FROM RESULTADO_DOMINIO WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+            }
 
-            // Eliminar resultados globales
-            await pool.request()
-                .input('id_empleado', sql.Int, id_empleado)
-                .query(`
-                    DELETE FROM RESULTADO_GLOBAL 
-                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
-                `);
+            await new Promise((resolve, reject) => {
+                db.run('DELETE FROM EVALUACION WHERE id_empleado = ?', [id_empleado], function(err) {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
 
-            // Eliminar resultados por categoría
-            await pool.request()
-                .input('id_empleado', sql.Int, id_empleado)
-                .query(`
-                    DELETE FROM RESULTADO_CATEGORIA 
-                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
-                `);
-
-            // Eliminar resultados por dominio
-            await pool.request()
-                .input('id_empleado', sql.Int, id_empleado)
-                .query(`
-                    DELETE FROM RESULTADO_DOMINIO 
-                    WHERE id_evaluacion IN (SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = @id_empleado)
-                `);
-
-            // Eliminar evaluaciones
-            await pool.request()
-                .input('id_empleado', sql.Int, id_empleado)
-                .query('DELETE FROM EVALUACION WHERE id_empleado = @id_empleado');
-
-            // Eliminar empleado
-            await pool.request()
-                .input('id_empleado', sql.Int, id_empleado)
-                .query('DELETE FROM EMPLEADO WHERE id_empleado = @id_empleado');
+            await new Promise((resolve, reject) => {
+                db.run('DELETE FROM EMPLEADO WHERE id_empleado = ?', [id_empleado], function(err) {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
         }
 
         res.json({ message: 'Usuario y todos sus datos eliminados correctamente' });
@@ -268,13 +240,11 @@ const updateUsuario = async (req, res, next) => {
             tiempo_exp_puesto, tiempo_exp_laboral
         } = req.body;
 
-        // Obtener usuario actual
         const user = await usuarioModel.findById(parseInt(id));
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Actualizar USUARIO
         const updateData = {
             nombre: nombre || user.nombre,
             email: email || user.email,
@@ -288,54 +258,42 @@ const updateUsuario = async (req, res, next) => {
 
         const updatedUser = await usuarioModel.update(parseInt(id), updateData);
 
-        // Actualizar EMPLEADO solo si id_empleado es un número válido
         const idEmpleado = parseInt(user.id_empleado);
         if (!isNaN(idEmpleado) && idEmpleado > 0) {
-            try {
-                const pool = getPool();
-                await pool.request()
-                    .input('id_empleado', sql.Int, idEmpleado)
-                    .input('nombre', sql.NVarChar, nombre || user.nombre)
-                    .input('email', sql.NVarChar, email || user.email)
-                    .input('departamento', sql.NVarChar, departamento || user.departamento)
-                    .input('sexo', sql.NVarChar, sexo || user.sexo || null)
-                    .input('edad', sql.Int, edad || user.edad || null)
-                    .input('estado_civil', sql.NVarChar, estado_civil || user.estado_civil || null)
-                    .input('nivel_estudios', sql.NVarChar, nivel_estudios || user.nivel_estudios || null)
-                    .input('ocupacion', sql.NVarChar, ocupacion_profesion_puesto || user.ocupacion_profesion_puesto || null)
-                    .input('tipo_puesto', sql.NVarChar, tipo_puesto || user.tipo_puesto || null)
-                    .input('tipo_contratacion', sql.NVarChar, tipo_contratacion || user.tipo_contratacion || null)
-                    .input('tipo_personal', sql.NVarChar, tipo_personal || user.tipo_personal || null)
-                    .input('tipo_jornada', sql.NVarChar, tipo_jornada || user.tipo_jornada || null)
-                    .input('rotacion', sql.Bit, rotacion_turno !== undefined ? rotacion_turno : user.rotacion_turno)
-                    .input('exp_puesto', sql.Int, tiempo_exp_puesto !== undefined ? tiempo_exp_puesto : user.tiempo_exp_puesto)
-                    .input('exp_laboral', sql.Int, tiempo_exp_laboral !== undefined ? tiempo_exp_laboral : user.tiempo_exp_laboral)
-                    .query(`
-                        UPDATE EMPLEADO SET
-                            nombre = @nombre,
-                            email = @email,
-                            departamento_seccion_area = @departamento,
-                            sexo = @sexo,
-                            edad = @edad,
-                            estado_civil = @estado_civil,
-                            nivel_estudios = @nivel_estudios,
-                            ocupacion_profesion_puesto = @ocupacion,
-                            tipo_puesto = @tipo_puesto,
-                            tipo_contratacion = @tipo_contratacion,
-                            tipo_personal = @tipo_personal,
-                            tipo_jornada = @tipo_jornada,
-                            rotacion_turno = @rotacion,
-                            tiempo_exp_puesto = @exp_puesto,
-                            tiempo_exp_laboral = @exp_laboral
-                        WHERE id_empleado = @id_empleado
-                    `);
-            } catch (empError) {
-                console.error('❌ Error al actualizar EMPLEADO:', empError.message);
-                // No lanzar el error para permitir que la actualización del usuario se considere exitosa
-            }
+            const db = getDB();
+            await new Promise((resolve, reject) => {
+                db.run(`
+                    UPDATE EMPLEADO SET
+                        nombre = ?, email = ?, departamento_seccion_area = ?,
+                        sexo = ?, edad = ?, estado_civil = ?, nivel_estudios = ?,
+                        ocupacion_profesion_puesto = ?, tipo_puesto = ?, tipo_contratacion = ?,
+                        tipo_personal = ?, tipo_jornada = ?, rotacion_turno = ?,
+                        tiempo_exp_puesto = ?, tiempo_exp_laboral = ?
+                    WHERE id_empleado = ?
+                `, [
+                    nombre || user.nombre,
+                    email || user.email,
+                    departamento || user.departamento,
+                    sexo || user.sexo || null,
+                    edad || user.edad || null,
+                    estado_civil || user.estado_civil || null,
+                    nivel_estudios || user.nivel_estudios || null,
+                    ocupacion_profesion_puesto || user.ocupacion_profesion_puesto || null,
+                    tipo_puesto || user.tipo_puesto || null,
+                    tipo_contratacion || user.tipo_contratacion || null,
+                    tipo_personal || user.tipo_personal || null,
+                    tipo_jornada || user.tipo_jornada || null,
+                    rotacion_turno !== undefined ? rotacion_turno : user.rotacion_turno,
+                    tiempo_exp_puesto !== undefined ? tiempo_exp_puesto : user.tiempo_exp_puesto,
+                    tiempo_exp_laboral !== undefined ? tiempo_exp_laboral : user.tiempo_exp_laboral,
+                    idEmpleado
+                ], function(err) {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
         }
 
-        // Obtener usuario actualizado con datos del empleado
         const updated = await usuarioModel.findById(parseInt(id));
         const { contraseña_hash, ...rest } = updated;
         res.json(rest);
@@ -348,7 +306,6 @@ const updateUsuario = async (req, res, next) => {
 const resetPassword = async (req, res, next) => {
     try {
         const { id } = req.params;
-
         const user = await usuarioModel.findById(parseInt(id));
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });

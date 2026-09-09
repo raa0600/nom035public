@@ -9,7 +9,7 @@ const connectDB = () => {
     return new Promise((resolve, reject) => {
         if (db) return resolve(db);
 
-        const dbPath = path.join(__dirname, '../../data/nom035.db');
+        const dbPath = path.join(__dirname, '../data/nom035.db');
         fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
         db = new sqlite3.Database(dbPath, async (err) => {
@@ -35,59 +35,6 @@ const getDB = () => {
     return db;
 };
 
-// ============================================================
-// FUNCIONES DE CLASIFICACIÓN
-// ============================================================
-function clasificarGlobal(puntaje) {
-    if (puntaje < 50) return 'Nulo';
-    if (puntaje < 75) return 'Bajo';
-    if (puntaje < 99) return 'Medio';
-    if (puntaje < 140) return 'Alto';
-    return 'Muy Alto';
-}
-
-function clasificarCategoria(id_categoria, puntaje) {
-    const umbrales = {
-        1: [5, 9, 11, 14],
-        2: [15, 30, 45, 60],
-        3: [5, 7, 10, 13],
-        4: [14, 29, 42, 58],
-        5: [10, 14, 18, 23]
-    };
-    const u = umbrales[id_categoria];
-    if (!u) return 'Nulo';
-    if (puntaje < u[0]) return 'Nulo';
-    if (puntaje < u[1]) return 'Bajo';
-    if (puntaje < u[2]) return 'Medio';
-    if (puntaje < u[3]) return 'Alto';
-    return 'Muy Alto';
-}
-
-function clasificarDominio(id_dominio, puntaje) {
-    const umbrales = {
-        1: [5, 9, 11, 14],
-        2: [15, 21, 27, 37],
-        3: [11, 16, 21, 25],
-        4: [1, 2, 4, 6],
-        5: [4, 6, 8, 10],
-        6: [9, 12, 16, 20],
-        7: [10, 13, 17, 21],
-        8: [7, 10, 13, 16],
-        9: [6, 10, 14, 18],
-        10: [4, 6, 8, 10]
-    };
-    const u = umbrales[id_dominio];
-    if (!u) return 'Nulo';
-    if (puntaje < u[0]) return 'Nulo';
-    if (puntaje < u[1]) return 'Bajo';
-    if (puntaje < u[2]) return 'Medio';
-    if (puntaje < u[3]) return 'Alto';
-    return 'Muy Alto';
-}
-
-// ============================================================
-// INICIALIZAR BASE DE DATOS
-// ============================================================
 async function inicializarBaseDeDatos(db) {
     // ========== CREAR TABLAS ==========
     const createTables = `
@@ -402,171 +349,9 @@ async function inicializarBaseDeDatos(db) {
         await insert(`INSERT OR IGNORE INTO PREGUNTA (id_dimension, numero, texto, tipo_puntaje) VALUES (?, ?, ?, ?)`, p);
     }
 
-    // Usuario administrador
-    const hashAdmin = await bcrypt.hash('admin123', 10);
-    await insert(`INSERT OR IGNORE INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol) VALUES ('Administrador', 'admin@nom035.com', ?, 'Sistemas', 1)`, [hashAdmin]);
-
-    // ============================================================
-    // CREAR USUARIOS Y EVALUACIONES DE PRUEBA (5 niveles)
-    // ============================================================
-    const niveles = [
-        { nombre: 'Nulo', total: 20, email: 'nulo@nom035.com' },
-        { nombre: 'Bajo', total: 60, email: 'bajo@nom035.com' },
-        { nombre: 'Medio', total: 85, email: 'medio@nom035.com' },
-        { nombre: 'Alto', total: 120, email: 'alto@nom035.com' },
-        { nombre: 'Muy Alto', total: 170, email: 'muyalto@nom035.com' }
-    ];
-
-    const passwordPrueba = '123456';
-
-    // Mapeo de tipo de pregunta por número
-    const tipoPorNumero = {};
-    preguntasIII.forEach(p => {
-        tipoPorNumero[p[1]] = p[3]; // p[1]=numero, p[3]=tipo_puntaje
-    });
-
-    for (const nivel of niveles) {
-        const hash = await bcrypt.hash(passwordPrueba, 10);
-
-        // Insertar empleado
-        await insert('INSERT OR IGNORE INTO EMPLEADO (nombre, email, departamento_seccion_area) VALUES (?, ?, ?)',
-            ['X Prueba ' + nivel.nombre, nivel.email, 'Pruebas']);
-        const empRow = await new Promise((resolve, reject) => {
-            db.get('SELECT id_empleado FROM EMPLEADO WHERE email = ?', [nivel.email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-        const empId = empRow ? empRow.id_empleado : null;
-
-        // Insertar usuario
-        await insert('INSERT OR IGNORE INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol, id_empleado) VALUES (?, ?, ?, ?, 3, ?)',
-            ['X Prueba ' + nivel.nombre, nivel.email, hash, 'Pruebas', empId]);
-
-        // Verificar si ya existe evaluación completada
-        const existEval = await new Promise((resolve, reject) => {
-            db.get('SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = ? AND estatus = ?', [empId, 'Completada'], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-        if (existEval) continue;
-
-        // Crear evaluación completada
-        const idEvaluacion = await new Promise((resolve, reject) => {
-            db.run('INSERT INTO EVALUACION (id_empleado, estatus, fecha_aplicacion) VALUES (?, ?, datetime(\'now\'))',
-                [empId, 'Completada'], function(err) { if (err) reject(err); else resolve(this.lastID); });
-        });
-
-        // Generar puntajes exactos para el total deseado
-        const puntajes = new Array(64).fill(0);
-        if (nivel.total === 20) {
-            const pos = [0, 5, 10, 15, 20];
-            pos.forEach(i => { if (i < 64) puntajes[i] = 4; });
-        } else if (nivel.total === 60) {
-            const pos = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61];
-            pos.forEach(i => { if (i < 64) puntajes[i] = 4; });
-        } else if (nivel.total === 85) {
-            const pos = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62];
-            pos.forEach(i => { if (i < 64) puntajes[i] = 4; });
-            for (let i = 0; i < 64; i += 3) {
-                if (puntajes[i] < 4) puntajes[i] = Math.min(4, puntajes[i] + 2);
-            }
-        } else if (nivel.total === 120) {
-            for (let i = 0; i < 64; i += 2) puntajes[i] = 3;
-            for (let i = 1; i < 64; i += 4) puntajes[i] = 4;
-        } else if (nivel.total === 170) {
-            for (let i = 0; i < 64; i++) puntajes[i] = 4;
-        }
-
-        const calcularTotal = (arr) => {
-            let total = 0;
-            for (let i = 0; i < 64; i++) {
-                const numero = i + 1;
-                const tipo = tipoPorNumero[numero] || 'DIRECTO';
-                const valorCrudo = (tipo === 'INVERSO') ? 4 - arr[i] : arr[i];
-                total += (tipo === 'INVERSO') ? 4 - valorCrudo : valorCrudo;
-            }
-            return total;
-        };
-        let totalActual = calcularTotal(puntajes);
-        while (totalActual !== nivel.total) {
-            if (totalActual < nivel.total) {
-                for (let i = 0; i < 64; i++) {
-                    const numero = i + 1;
-                    const tipo = tipoPorNumero[numero] || 'DIRECTO';
-                    if (tipo === 'DIRECTO' && puntajes[i] < 4) { puntajes[i]++; totalActual = calcularTotal(puntajes); break; }
-                    if (tipo === 'INVERSO' && puntajes[i] > 0) { puntajes[i]--; totalActual = calcularTotal(puntajes); break; }
-                }
-            } else {
-                for (let i = 0; i < 64; i++) {
-                    const numero = i + 1;
-                    const tipo = tipoPorNumero[numero] || 'DIRECTO';
-                    if (tipo === 'DIRECTO' && puntajes[i] > 0) { puntajes[i]--; totalActual = calcularTotal(puntajes); break; }
-                    if (tipo === 'INVERSO' && puntajes[i] < 4) { puntajes[i]++; totalActual = calcularTotal(puntajes); break; }
-                }
-            }
-        }
-
-        const valoresCrudos = new Array(64).fill(0);
-        for (let i = 0; i < 64; i++) {
-            const numero = i + 1;
-            const tipo = tipoPorNumero[numero] || 'DIRECTO';
-            valoresCrudos[i] = (tipo === 'INVERSO') ? 4 - puntajes[i] : puntajes[i];
-        }
-
-        for (let i = 0; i < 64; i++) {
-            await insert('INSERT OR REPLACE INTO RESPUESTA (id_evaluacion, id_pregunta, valor_escogido) VALUES (?, ?, ?)',
-                [idEvaluacion, i + 1, valoresCrudos[i]]);
-        }
-
-        const preguntasConCat = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT p.numero, p.id_dimension, d.id_dominio, dom.id_categoria
-                FROM PREGUNTA p
-                JOIN DIMENSION d ON p.id_dimension = d.id_dimension
-                JOIN DOMINIO dom ON d.id_dominio = dom.id_dominio
-                WHERE p.numero BETWEEN 1 AND 64
-            `, (err, rows) => { if (err) reject(err); else resolve(rows || []); });
-        });
-
-        const catPuntajes = {};
-        const domPuntajes = {};
-        let totalGlobal = 0;
-
-        for (const p of preguntasConCat) {
-            const numero = p.numero;
-            const tipo = tipoPorNumero[numero] || 'DIRECTO';
-            const valorCrudo = valoresCrudos[numero - 1];
-            const puntaje = (tipo === 'INVERSO') ? 4 - valorCrudo : valorCrudo;
-
-            if (!catPuntajes[p.id_categoria]) catPuntajes[p.id_categoria] = { bruto: 0, maximo: 0 };
-            if (!domPuntajes[p.id_dominio]) domPuntajes[p.id_dominio] = { bruto: 0, maximo: 0 };
-
-            catPuntajes[p.id_categoria].bruto += puntaje;
-            catPuntajes[p.id_categoria].maximo += 4;
-            domPuntajes[p.id_dominio].bruto += puntaje;
-            domPuntajes[p.id_dominio].maximo += 4;
-            totalGlobal += puntaje;
-        }
-
-        await insert('INSERT INTO RESULTADO_GLOBAL (id_evaluacion, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, resultado_final) VALUES (?, ?, ?, ?, ?)',
-            [idEvaluacion, totalGlobal, 256, (totalGlobal/256)*100, clasificarGlobal(totalGlobal)]);
-
-        for (const [idCat, datos] of Object.entries(catPuntajes)) {
-            const nivelRiesgo = clasificarCategoria(parseInt(idCat), datos.bruto);
-            await insert('INSERT INTO RESULTADO_CATEGORIA (id_evaluacion, id_categoria, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo) VALUES (?, ?, ?, ?, ?, ?)',
-                [idEvaluacion, parseInt(idCat), datos.bruto, datos.maximo, (datos.bruto/datos.maximo)*100, nivelRiesgo]);
-        }
-
-        for (const [idDom, datos] of Object.entries(domPuntajes)) {
-            const nivelRiesgo = clasificarDominio(parseInt(idDom), datos.bruto);
-            await insert('INSERT INTO RESULTADO_DOMINIO (id_evaluacion, id_dominio, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo) VALUES (?, ?, ?, ?, ?, ?)',
-                [idEvaluacion, parseInt(idDom), datos.bruto, datos.maximo, (datos.bruto/datos.maximo)*100, nivelRiesgo]);
-        }
-
-        console.log(`✅ Creada evaluación ${nivel.nombre} con puntaje ${totalGlobal}`);
-    }
+    // Usuario admin
+    const hash = await bcrypt.hash('admin123', 10);
+    await insert(`INSERT OR IGNORE INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol) VALUES ('Administrador', 'admin@nom035.com', ?, 'Sistemas', 1)`, [hash]);
 }
 
 module.exports = { connectDB, getDB };

@@ -1,41 +1,47 @@
-const { getPool, sql } = require('../config/database');
+const { getDB } = require('../config/database');
 
-// Obtener todas las preguntas de la Guía I
 const getPreguntas = async () => {
-    const pool = getPool();
-    const result = await pool.request()
-        .query('SELECT * FROM PREGUNTA_GUIA_I ORDER BY numero');
-    return result.recordset;
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM PREGUNTA_GUIA_I ORDER BY numero', (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
 };
 
-// Guardar respuestas de la Guía I
 const saveRespuestas = async (id_evaluacion, respuestas) => {
-    const pool = getPool();
+    const db = getDB();
+    const stmt = db.prepare(`
+        INSERT INTO RESPUESTA_GUIA_I (id_evaluacion, id_pregunta_guia_i, respuesta)
+        VALUES (?, ?, ?)
+    `);
+
     for (const { id_pregunta, respuesta } of respuestas) {
-        await pool.request()
-            .input('id_eval', sql.Int, id_evaluacion)
-            .input('id_preg', sql.Int, id_pregunta)
-            .input('resp', sql.Bit, respuesta)
-            .query(`
-                INSERT INTO RESPUESTA_GUIA_I (id_evaluacion, id_pregunta_guia_i, respuesta)
-                VALUES (@id_eval, @id_preg, @resp)
-            `);
+        await new Promise((resolve, reject) => {
+            stmt.run(id_evaluacion, id_pregunta, respuesta ? 1 : 0, function(err) {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
     }
+    stmt.finalize();
 };
 
-// Obtener respuestas de una evaluación
 const getRespuestas = async (id_evaluacion) => {
-    const pool = getPool();
-    const result = await pool.request()
-        .input('id_eval', sql.Int, id_evaluacion)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.all(`
             SELECT r.id_pregunta_guia_i, r.respuesta, p.numero
             FROM RESPUESTA_GUIA_I r
             JOIN PREGUNTA_GUIA_I p ON r.id_pregunta_guia_i = p.id_pregunta_guia_i
-            WHERE r.id_evaluacion = @id_eval
+            WHERE r.id_evaluacion = ?
             ORDER BY p.numero
-        `);
-    return result.recordset;
+        `, [id_evaluacion], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
 };
 
 module.exports = { getPreguntas, saveRespuestas, getRespuestas };

@@ -1,43 +1,47 @@
-const { getPool, sql } = require('../config/database');
+const { getDB } = require('../config/database');
 
 const create = async (id_empleado) => {
-    const pool = getPool();
-    const result = await pool.request()
-        .input('id_empleado', sql.Int, id_empleado)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.run(`
             INSERT INTO EVALUACION (id_empleado, estatus, fecha_aplicacion)
-            VALUES (@id_empleado, 'Pendiente', GETDATE());
-            SELECT SCOPE_IDENTITY() AS id;
-        `);
-    return result.recordset[0].id;
+            VALUES (?, 'En_proceso', datetime('now'))
+        `, [id_empleado], function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+        });
+    });
 };
 
 const findById = async (id_evaluacion) => {
-    const pool = getPool();
-    const result = await pool.request()
-        .input('id', sql.Int, id_evaluacion)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.get(`
             SELECT e.*, emp.nombre AS empleado_nombre
             FROM EVALUACION e
             JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
-            WHERE e.id_evaluacion = @id
-        `);
-    return result.recordset[0];
+            WHERE e.id_evaluacion = ?
+        `, [id_evaluacion], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
 };
 
 const updateStatus = async (id_evaluacion, status) => {
-    const pool = getPool();
-    await pool.request()
-        .input('id', sql.Int, id_evaluacion)
-        .input('status', sql.NVarChar, status)
-        .query('UPDATE EVALUACION SET estatus = @status WHERE id_evaluacion = @id');
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.run('UPDATE EVALUACION SET estatus = ? WHERE id_evaluacion = ?', [status, id_evaluacion], function(err) {
+            if (err) reject(err);
+            else resolve(this.changes > 0);
+        });
+    });
 };
 
 const getPreguntasByEvaluacion = async (id_evaluacion) => {
-    const pool = getPool();
-    const result = await pool.request()
-        .input('id_eval', sql.Int, id_evaluacion)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.all(`
             SELECT 
                 p.id_pregunta,
                 p.numero,
@@ -49,72 +53,72 @@ const getPreguntasByEvaluacion = async (id_evaluacion) => {
                 dom.nombre AS dominio_nombre,
                 cat.id_categoria,
                 cat.nombre AS categoria_nombre,
-                ISNULL(r.valor_escogido, -1) AS valor_guardado
+                COALESCE(r.valor_escogido, -1) AS valor_guardado
             FROM PREGUNTA p
             JOIN DIMENSION d ON p.id_dimension = d.id_dimension
             JOIN DOMINIO dom ON d.id_dominio = dom.id_dominio
             JOIN CATEGORIA cat ON dom.id_categoria = cat.id_categoria
-            LEFT JOIN RESPUESTA r ON r.id_pregunta = p.id_pregunta AND r.id_evaluacion = @id_eval
+            LEFT JOIN RESPUESTA r ON r.id_pregunta = p.id_pregunta AND r.id_evaluacion = ?
             ORDER BY cat.id_categoria, dom.id_dominio, d.id_dimension, p.numero
-        `);
-    return result.recordset;
+        `, [id_evaluacion], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
 };
 
 const getEvaluacionesByEmpleado = async (id_empleado) => {
-    const pool = getPool();
-    const result = await pool.request()
-        .input('id_empleado', sql.Int, id_empleado)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.all(`
             SELECT id_evaluacion, fecha_aplicacion, estatus, requiere_canalizacion
             FROM EVALUACION
-            WHERE id_empleado = @id_empleado
+            WHERE id_empleado = ?
             ORDER BY fecha_aplicacion DESC
-        `);
-    return result.recordset;
+        `, [id_empleado], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
 };
 
 const insertResultadoGlobal = async (id_evaluacion, puntaje_bruto, puntaje_maximo, porcentaje, resultado_final) => {
-    const pool = getPool();
-    await pool.request()
-        .input('id_eval', sql.Int, id_evaluacion)
-        .input('bruto', sql.Int, puntaje_bruto)
-        .input('max', sql.Int, puntaje_maximo)
-        .input('porc', sql.Decimal(5, 2), porcentaje)
-        .input('final', sql.NVarChar(30), resultado_final)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.run(`
             INSERT INTO RESULTADO_GLOBAL (id_evaluacion, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, resultado_final)
-            VALUES (@id_eval, @bruto, @max, @porc, @final)
-        `);
+            VALUES (?, ?, ?, ?, ?)
+        `, [id_evaluacion, puntaje_bruto, puntaje_maximo, porcentaje, resultado_final], function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+        });
+    });
 };
 
 const insertResultadoCategoria = async (id_evaluacion, id_categoria, puntaje_bruto, puntaje_maximo, porcentaje, nivel_riesgo) => {
-    const pool = getPool();
-    await pool.request()
-        .input('id_eval', sql.Int, id_evaluacion)
-        .input('id_cat', sql.Int, id_categoria)
-        .input('bruto', sql.Int, puntaje_bruto)
-        .input('max', sql.Int, puntaje_maximo)
-        .input('porc', sql.Decimal(5, 2), porcentaje)
-        .input('nivel', sql.NVarChar(20), nivel_riesgo)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.run(`
             INSERT INTO RESULTADO_CATEGORIA (id_evaluacion, id_categoria, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo)
-            VALUES (@id_eval, @id_cat, @bruto, @max, @porc, @nivel)
-        `);
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [id_evaluacion, id_categoria, puntaje_bruto, puntaje_maximo, porcentaje, nivel_riesgo], function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+        });
+    });
 };
 
 const insertResultadoDominio = async (id_evaluacion, id_dominio, puntaje_bruto, puntaje_maximo, porcentaje, nivel_riesgo) => {
-    const pool = getPool();
-    await pool.request()
-        .input('id_eval', sql.Int, id_evaluacion)
-        .input('id_dom', sql.Int, id_dominio)
-        .input('bruto', sql.Int, puntaje_bruto)
-        .input('max', sql.Int, puntaje_maximo)
-        .input('porc', sql.Decimal(5, 2), porcentaje)
-        .input('nivel', sql.NVarChar(20), nivel_riesgo)
-        .query(`
+    const db = getDB();
+    return new Promise((resolve, reject) => {
+        db.run(`
             INSERT INTO RESULTADO_DOMINIO (id_evaluacion, id_dominio, puntaje_bruto, puntaje_maximo, puntaje_porcentaje, nivel_riesgo)
-            VALUES (@id_eval, @id_dom, @bruto, @max, @porc, @nivel)
-        `);
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [id_evaluacion, id_dominio, puntaje_bruto, puntaje_maximo, porcentaje, nivel_riesgo], function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+        });
+    });
 };
 
 module.exports = {
