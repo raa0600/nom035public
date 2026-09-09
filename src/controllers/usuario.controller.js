@@ -30,6 +30,7 @@ const getPerfil = async (req, res, next) => {
     }
 };
 
+// ---------- OBTENER USUARIO POR ID ----------
 const getUsuarioById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -70,47 +71,37 @@ const createUsuario = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insertar usuario
-        const id_usuario = await new Promise((resolve, reject) => {
-            db.run(`
-                INSERT INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol)
-                VALUES (?, ?, ?, ?, ?)
-            `, [nombre, email, hashedPassword, departamento, id_rol || 3], function(err) {
-                if (err) reject(err);
-                else resolve(this.lastID);
-            });
+        const id_usuario = usuarioModel.create({
+            nombre,
+            email,
+            contraseña_hash: hashedPassword,
+            departamento,
+            id_rol: id_rol || 3
         });
 
-        // Insertar empleado
-        const id_empleado = await new Promise((resolve, reject) => {
-            db.run(`
-                INSERT INTO EMPLEADO (
-                    nombre, email, departamento_seccion_area,
-                    sexo, edad, estado_civil, nivel_estudios,
-                    ocupacion_profesion_puesto, tipo_puesto, tipo_contratacion,
-                    tipo_personal, tipo_jornada, rotacion_turno,
-                    tiempo_exp_puesto, tiempo_exp_laboral
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                nombre, email, departamento || null,
+        // Insertar empleado con todos los campos
+        const insertEmpleado = db.prepare(`
+            INSERT INTO EMPLEADO (
+                nombre, email, departamento_seccion_area,
                 sexo, edad, estado_civil, nivel_estudios,
                 ocupacion_profesion_puesto, tipo_puesto, tipo_contratacion,
                 tipo_personal, tipo_jornada, rotacion_turno,
                 tiempo_exp_puesto, tiempo_exp_laboral
-            ], function(err) {
-                if (err) reject(err);
-                else resolve(this.lastID);
-            });
-        });
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const resultEmpleado = insertEmpleado.run(
+            nombre, email, departamento || null,
+            sexo, edad, estado_civil, nivel_estudios,
+            ocupacion_profesion_puesto, tipo_puesto, tipo_contratacion,
+            tipo_personal, tipo_jornada, rotacion_turno,
+            tiempo_exp_puesto, tiempo_exp_laboral
+        );
+        const id_empleado = resultEmpleado.lastInsertRowid;
 
         // Vincular usuario con empleado
-        await new Promise((resolve, reject) => {
-            db.run('UPDATE USUARIO SET id_empleado = ? WHERE id_usuario = ?', [id_empleado, id_usuario], function(err) {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        db.prepare('UPDATE USUARIO SET id_empleado = ? WHERE id_usuario = ?').run(id_empleado, id_usuario);
 
+        // Obtener usuario completo
         const newUser = await usuarioModel.findById(id_usuario);
         const { contraseña_hash, ...rest } = newUser;
         res.status(201).json(rest);
@@ -158,68 +149,22 @@ const deleteUsuario = async (req, res, next) => {
         const id_empleado = user.id_empleado;
 
         // Eliminar usuario
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM USUARIO WHERE id_usuario = ?', [id], function(err) {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        db.prepare('DELETE FROM USUARIO WHERE id_usuario = ?').run(id);
 
-        // Si tenía empleado, eliminar todos sus datos
         if (id_empleado) {
-            const evaluaciones = await new Promise((resolve, reject) => {
-                db.all('SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = ?', [id_empleado], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                });
-            });
+            // Obtener evaluaciones del empleado
+            const evaluaciones = db.prepare('SELECT id_evaluacion FROM EVALUACION WHERE id_empleado = ?').all(id_empleado);
 
             for (const e of evaluaciones) {
-                await new Promise((resolve, reject) => {
-                    db.run('DELETE FROM RESPUESTA WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-                await new Promise((resolve, reject) => {
-                    db.run('DELETE FROM RESPUESTA_GUIA_I WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-                await new Promise((resolve, reject) => {
-                    db.run('DELETE FROM RESULTADO_GLOBAL WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-                await new Promise((resolve, reject) => {
-                    db.run('DELETE FROM RESULTADO_CATEGORIA WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-                await new Promise((resolve, reject) => {
-                    db.run('DELETE FROM RESULTADO_DOMINIO WHERE id_evaluacion = ?', [e.id_evaluacion], function(err) {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
+                db.prepare('DELETE FROM RESPUESTA WHERE id_evaluacion = ?').run(e.id_evaluacion);
+                db.prepare('DELETE FROM RESPUESTA_GUIA_I WHERE id_evaluacion = ?').run(e.id_evaluacion);
+                db.prepare('DELETE FROM RESULTADO_GLOBAL WHERE id_evaluacion = ?').run(e.id_evaluacion);
+                db.prepare('DELETE FROM RESULTADO_CATEGORIA WHERE id_evaluacion = ?').run(e.id_evaluacion);
+                db.prepare('DELETE FROM RESULTADO_DOMINIO WHERE id_evaluacion = ?').run(e.id_evaluacion);
             }
 
-            await new Promise((resolve, reject) => {
-                db.run('DELETE FROM EVALUACION WHERE id_empleado = ?', [id_empleado], function(err) {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
-
-            await new Promise((resolve, reject) => {
-                db.run('DELETE FROM EMPLEADO WHERE id_empleado = ?', [id_empleado], function(err) {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
+            db.prepare('DELETE FROM EVALUACION WHERE id_empleado = ?').run(id_empleado);
+            db.prepare('DELETE FROM EMPLEADO WHERE id_empleado = ?').run(id_empleado);
         }
 
         res.json({ message: 'Usuario y todos sus datos eliminados correctamente' });
@@ -228,7 +173,7 @@ const deleteUsuario = async (req, res, next) => {
     }
 };
 
-// ---------- ACTUALIZAR USUARIO COMPLETO (incluye departamento) ----------
+// ---------- ACTUALIZAR USUARIO COMPLETO (incluye departamento y empleado) ----------
 const updateUsuario = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -256,42 +201,37 @@ const updateUsuario = async (req, res, next) => {
             updateData.contraseña_hash = await bcrypt.hash(password, 10);
         }
 
-        const updatedUser = await usuarioModel.update(parseInt(id), updateData);
+        await usuarioModel.update(parseInt(id), updateData);
 
         const idEmpleado = parseInt(user.id_empleado);
         if (!isNaN(idEmpleado) && idEmpleado > 0) {
             const db = getDB();
-            await new Promise((resolve, reject) => {
-                db.run(`
-                    UPDATE EMPLEADO SET
-                        nombre = ?, email = ?, departamento_seccion_area = ?,
-                        sexo = ?, edad = ?, estado_civil = ?, nivel_estudios = ?,
-                        ocupacion_profesion_puesto = ?, tipo_puesto = ?, tipo_contratacion = ?,
-                        tipo_personal = ?, tipo_jornada = ?, rotacion_turno = ?,
-                        tiempo_exp_puesto = ?, tiempo_exp_laboral = ?
-                    WHERE id_empleado = ?
-                `, [
-                    nombre || user.nombre,
-                    email || user.email,
-                    departamento || user.departamento,
-                    sexo || user.sexo || null,
-                    edad || user.edad || null,
-                    estado_civil || user.estado_civil || null,
-                    nivel_estudios || user.nivel_estudios || null,
-                    ocupacion_profesion_puesto || user.ocupacion_profesion_puesto || null,
-                    tipo_puesto || user.tipo_puesto || null,
-                    tipo_contratacion || user.tipo_contratacion || null,
-                    tipo_personal || user.tipo_personal || null,
-                    tipo_jornada || user.tipo_jornada || null,
-                    rotacion_turno !== undefined ? rotacion_turno : user.rotacion_turno,
-                    tiempo_exp_puesto !== undefined ? tiempo_exp_puesto : user.tiempo_exp_puesto,
-                    tiempo_exp_laboral !== undefined ? tiempo_exp_laboral : user.tiempo_exp_laboral,
-                    idEmpleado
-                ], function(err) {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
+            db.prepare(`
+                UPDATE EMPLEADO SET
+                    nombre = ?, email = ?, departamento_seccion_area = ?,
+                    sexo = ?, edad = ?, estado_civil = ?, nivel_estudios = ?,
+                    ocupacion_profesion_puesto = ?, tipo_puesto = ?, tipo_contratacion = ?,
+                    tipo_personal = ?, tipo_jornada = ?, rotacion_turno = ?,
+                    tiempo_exp_puesto = ?, tiempo_exp_laboral = ?
+                WHERE id_empleado = ?
+            `).run(
+                nombre || user.nombre,
+                email || user.email,
+                departamento || user.departamento,
+                sexo || user.sexo || null,
+                edad || user.edad || null,
+                estado_civil || user.estado_civil || null,
+                nivel_estudios || user.nivel_estudios || null,
+                ocupacion_profesion_puesto || user.ocupacion_profesion_puesto || null,
+                tipo_puesto || user.tipo_puesto || null,
+                tipo_contratacion || user.tipo_contratacion || null,
+                tipo_personal || user.tipo_personal || null,
+                tipo_jornada || user.tipo_jornada || null,
+                rotacion_turno !== undefined ? rotacion_turno : user.rotacion_turno,
+                tiempo_exp_puesto !== undefined ? tiempo_exp_puesto : user.tiempo_exp_puesto,
+                tiempo_exp_laboral !== undefined ? tiempo_exp_laboral : user.tiempo_exp_laboral,
+                idEmpleado
+            );
         }
 
         const updated = await usuarioModel.findById(parseInt(id));

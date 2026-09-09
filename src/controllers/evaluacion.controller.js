@@ -27,12 +27,7 @@ const guardarGuiaI = async (req, res, next) => {
 
         if (resultado.requiereCanalizacion) {
             const db = getDB();
-            await new Promise((resolve, reject) => {
-                db.run('UPDATE EVALUACION SET requiere_canalizacion = 1 WHERE id_evaluacion = ?', [id], function(err) {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
+            db.prepare('UPDATE EVALUACION SET requiere_canalizacion = 1 WHERE id_evaluacion = ?').run(id);
             await evaluacionModel.updateStatus(id, 'En_proceso');
             return res.json({
                 message: 'Se detectó canalización. Continúe con el cuestionario principal.',
@@ -87,13 +82,7 @@ const iniciarEvaluacion = async (req, res, next) => {
         const db = getDB();
         const userId = req.user.id;
 
-        const user = await new Promise((resolve, reject) => {
-            db.get('SELECT id_usuario, email, nombre, id_empleado FROM USUARIO WHERE id_usuario = ?', [userId], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
+        const user = await usuarioModel.findById(userId);
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
@@ -101,30 +90,15 @@ const iniciarEvaluacion = async (req, res, next) => {
         let id_empleado = user.id_empleado;
 
         if (!id_empleado) {
-            const empleadoExistente = await new Promise((resolve, reject) => {
-                db.get('SELECT id_empleado FROM EMPLEADO WHERE email = ?', [user.email], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                });
-            });
-
+            // Buscar empleado por email
+            const empleadoExistente = db.prepare('SELECT id_empleado FROM EMPLEADO WHERE email = ?').get(user.email);
             if (empleadoExistente) {
                 id_empleado = empleadoExistente.id_empleado;
             } else {
-                id_empleado = await new Promise((resolve, reject) => {
-                    db.run('INSERT INTO EMPLEADO (nombre, email) VALUES (?, ?)', [user.nombre, user.email], function(err) {
-                        if (err) reject(err);
-                        else resolve(this.lastID);
-                    });
-                });
+                const result = db.prepare('INSERT INTO EMPLEADO (nombre, email) VALUES (?, ?)').run(user.nombre, user.email);
+                id_empleado = result.lastInsertRowid;
             }
-
-            await new Promise((resolve, reject) => {
-                db.run('UPDATE USUARIO SET id_empleado = ? WHERE id_usuario = ?', [id_empleado, userId], function(err) {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
+            db.prepare('UPDATE USUARIO SET id_empleado = ? WHERE id_usuario = ?').run(id_empleado, userId);
         }
 
         const id_evaluacion = await evaluacionModel.create(id_empleado);
@@ -239,26 +213,21 @@ const finalizarEvaluacion = async (req, res, next) => {
 
             const tipo = pregunta.tipo_puntaje.toLowerCase();
             let puntaje = valor;
-
             if (tipo === 'inverso' || tipo === 'inversa' || tipo === '0') {
                 puntaje = 4 - valor;
-            } else {
-                puntaje = valor;
             }
 
-            if (domPuntajes[pregunta.id_dominio]) {
-                domPuntajes[pregunta.id_dominio].bruto += puntaje;
-                domPuntajes[pregunta.id_dominio].maximo += 4;
-            } else {
-                domPuntajes[pregunta.id_dominio] = { bruto: puntaje, maximo: 4 };
+            if (!domPuntajes[pregunta.id_dominio]) {
+                domPuntajes[pregunta.id_dominio] = { bruto: 0, maximo: 0 };
             }
+            domPuntajes[pregunta.id_dominio].bruto += puntaje;
+            domPuntajes[pregunta.id_dominio].maximo += 4;
 
-            if (catPuntajes[pregunta.id_categoria]) {
-                catPuntajes[pregunta.id_categoria].bruto += puntaje;
-                catPuntajes[pregunta.id_categoria].maximo += 4;
-            } else {
-                catPuntajes[pregunta.id_categoria] = { bruto: puntaje, maximo: 4 };
+            if (!catPuntajes[pregunta.id_categoria]) {
+                catPuntajes[pregunta.id_categoria] = { bruto: 0, maximo: 0 };
             }
+            catPuntajes[pregunta.id_categoria].bruto += puntaje;
+            catPuntajes[pregunta.id_categoria].maximo += 4;
 
             totalBruto += puntaje;
             totalMaximo += 4;
@@ -304,17 +273,10 @@ const getEvaluacionesEnCurso = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const db = getDB();
-        const user = await new Promise((resolve, reject) => {
-            db.get('SELECT id_empleado FROM USUARIO WHERE id_usuario = ?', [userId], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
+        const user = db.prepare('SELECT id_empleado FROM USUARIO WHERE id_usuario = ?').get(userId);
         if (!user?.id_empleado) {
             return res.json([]);
         }
-
         const evaluaciones = await evaluacionModel.getEvaluacionesByEmpleado(user.id_empleado);
         const enCurso = evaluaciones.filter(e => e.estatus === 'En_proceso');
         res.json(enCurso);
@@ -351,28 +313,17 @@ const getEstadoActual = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const db = getDB();
-        const user = await new Promise((resolve, reject) => {
-            db.get('SELECT id_empleado FROM USUARIO WHERE id_usuario = ?', [userId], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
+        const user = db.prepare('SELECT id_empleado FROM USUARIO WHERE id_usuario = ?').get(userId);
         const id_empleado = user?.id_empleado;
         if (!id_empleado) return res.json(null);
 
-        const evaluacion = await new Promise((resolve, reject) => {
-            db.get(`
-                SELECT id_evaluacion, estatus, fecha_aplicacion
-                FROM EVALUACION
-                WHERE id_empleado = ? AND estatus IN ('En_proceso', 'Completada')
-                ORDER BY fecha_aplicacion DESC
-                LIMIT 1
-            `, [id_empleado], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        const evaluacion = db.prepare(`
+            SELECT id_evaluacion, estatus, fecha_aplicacion
+            FROM EVALUACION
+            WHERE id_empleado = ? AND estatus IN ('En_proceso', 'Completada')
+            ORDER BY fecha_aplicacion DESC
+            LIMIT 1
+        `).get(id_empleado);
 
         res.json(evaluacion || null);
     } catch (err) {
@@ -387,18 +338,13 @@ const getEstadoActual = async (req, res, next) => {
 const getEvaluacionesCompletadas = async (req, res, next) => {
     try {
         const db = getDB();
-        const result = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT e.id_evaluacion, emp.nombre, emp.departamento_seccion_area, e.fecha_aplicacion, e.estatus
-                FROM EVALUACION e
-                JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
-                WHERE e.estatus = 'Completada'
-                ORDER BY e.fecha_aplicacion DESC
-            `, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const result = db.prepare(`
+            SELECT e.id_evaluacion, emp.nombre, emp.departamento_seccion_area, e.fecha_aplicacion, e.estatus
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            WHERE e.estatus = 'Completada'
+            ORDER BY e.fecha_aplicacion DESC
+        `).all();
         res.json(result);
     } catch (err) {
         next(err);
@@ -413,59 +359,39 @@ const getResultados = async (req, res, next) => {
         const { id } = req.params;
         const db = getDB();
 
-        const empleadoInfo = await new Promise((resolve, reject) => {
-            db.get(`
-                SELECT emp.nombre AS empleado_nombre, e.fecha_aplicacion
-                FROM EVALUACION e
-                JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
-                WHERE e.id_evaluacion = ?
-            `, [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row || {});
-            });
-        });
+        const empleadoInfo = db.prepare(`
+            SELECT emp.nombre AS empleado_nombre, e.fecha_aplicacion
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            WHERE e.id_evaluacion = ?
+        `).get(id);
 
-        const global = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM RESULTADO_GLOBAL WHERE id_evaluacion = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row || null);
-            });
-        });
+        const global = db.prepare('SELECT * FROM RESULTADO_GLOBAL WHERE id_evaluacion = ?').get(id) || null;
 
-        const categorias = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT rc.id_resultado_cat, rc.id_evaluacion, rc.id_categoria, c.nombre AS categoria_nombre,
-                       rc.puntaje_bruto, rc.puntaje_maximo, rc.puntaje_porcentaje, rc.nivel_riesgo
-                FROM RESULTADO_CATEGORIA rc
-                JOIN CATEGORIA c ON rc.id_categoria = c.id_categoria
-                WHERE rc.id_evaluacion = ?
-                ORDER BY rc.id_categoria
-            `, [id], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const categorias = db.prepare(`
+            SELECT rc.id_resultado_cat, rc.id_evaluacion, rc.id_categoria, c.nombre AS categoria_nombre,
+                   rc.puntaje_bruto, rc.puntaje_maximo, rc.puntaje_porcentaje, rc.nivel_riesgo
+            FROM RESULTADO_CATEGORIA rc
+            JOIN CATEGORIA c ON rc.id_categoria = c.id_categoria
+            WHERE rc.id_evaluacion = ?
+            ORDER BY rc.id_categoria
+        `).all(id);
 
-        const dominios = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT rd.id_resultado_dom, rd.id_evaluacion, rd.id_dominio, d.nombre AS dominio_nombre,
-                       rd.puntaje_bruto, rd.puntaje_maximo, rd.puntaje_porcentaje, rd.nivel_riesgo
-                FROM RESULTADO_DOMINIO rd
-                JOIN DOMINIO d ON rd.id_dominio = d.id_dominio
-                WHERE rd.id_evaluacion = ?
-                ORDER BY rd.id_dominio
-            `, [id], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const dominios = db.prepare(`
+            SELECT rd.id_resultado_dom, rd.id_evaluacion, rd.id_dominio, d.nombre AS dominio_nombre,
+                   rd.puntaje_bruto, rd.puntaje_maximo, rd.puntaje_porcentaje, rd.nivel_riesgo
+            FROM RESULTADO_DOMINIO rd
+            JOIN DOMINIO d ON rd.id_dominio = d.id_dominio
+            WHERE rd.id_evaluacion = ?
+            ORDER BY rd.id_dominio
+        `).all(id);
 
         res.json({
             global,
             categorias,
             dominios,
-            empleado_nombre: empleadoInfo.empleado_nombre || 'No disponible',
-            fecha_finalizacion: empleadoInfo.fecha_aplicacion ? new Date(empleadoInfo.fecha_aplicacion).toLocaleDateString() : 'No disponible'
+            empleado_nombre: empleadoInfo?.empleado_nombre || 'No disponible',
+            fecha_finalizacion: empleadoInfo?.fecha_aplicacion ? new Date(empleadoInfo.fecha_aplicacion).toLocaleDateString() : 'No disponible'
         });
     } catch (err) {
         next(err);
@@ -478,27 +404,22 @@ const getResultados = async (req, res, next) => {
 const getCanalizaciones = async (req, res, next) => {
     try {
         const db = getDB();
-        const result = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT 
-                    e.id_evaluacion,
-                    u.id_usuario,
-                    emp.id_empleado,
-                    emp.nombre AS empleado_nombre,
-                    emp.email AS empleado_email,
-                    emp.departamento_seccion_area,
-                    e.fecha_aplicacion,
-                    e.estatus
-                FROM EVALUACION e
-                JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
-                JOIN USUARIO u ON u.id_empleado = emp.id_empleado
-                WHERE e.requiere_canalizacion = 1 AND e.estatus = 'Completada'
-                ORDER BY e.fecha_aplicacion DESC
-            `, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const result = db.prepare(`
+            SELECT 
+                e.id_evaluacion,
+                u.id_usuario,
+                emp.id_empleado,
+                emp.nombre AS empleado_nombre,
+                emp.email AS empleado_email,
+                emp.departamento_seccion_area,
+                e.fecha_aplicacion,
+                e.estatus
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            JOIN USUARIO u ON u.id_empleado = emp.id_empleado
+            WHERE e.requiere_canalizacion = 1 AND e.estatus = 'Completada'
+            ORDER BY e.fecha_aplicacion DESC
+        `).all();
         res.json(result);
     } catch (err) {
         next(err);
@@ -510,39 +431,18 @@ const deleteEvaluacion = async (req, res, next) => {
         const { id } = req.params;
         const db = getDB();
 
-        const evalRow = await new Promise((resolve, reject) => {
-            db.get('SELECT requiere_canalizacion FROM EVALUACION WHERE id_evaluacion = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
-        if (!evalRow) {
-            return res.status(404).json({ error: 'Evaluación no encontrada' });
-        }
-
+        const evalRow = db.prepare('SELECT requiere_canalizacion FROM EVALUACION WHERE id_evaluacion = ?').get(id);
+        if (!evalRow) return res.status(404).json({ error: 'Evaluación no encontrada' });
         if (!evalRow.requiere_canalizacion) {
             return res.status(400).json({ error: 'Solo se pueden eliminar evaluaciones con canalización' });
         }
 
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM RESPUESTA_GUIA_I WHERE id_evaluacion = ?', [id], function(err) { if (err) reject(err); else resolve(); });
-        });
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM RESPUESTA WHERE id_evaluacion = ?', [id], function(err) { if (err) reject(err); else resolve(); });
-        });
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM RESULTADO_GLOBAL WHERE id_evaluacion = ?', [id], function(err) { if (err) reject(err); else resolve(); });
-        });
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM RESULTADO_CATEGORIA WHERE id_evaluacion = ?', [id], function(err) { if (err) reject(err); else resolve(); });
-        });
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM RESULTADO_DOMINIO WHERE id_evaluacion = ?', [id], function(err) { if (err) reject(err); else resolve(); });
-        });
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM EVALUACION WHERE id_evaluacion = ?', [id], function(err) { if (err) reject(err); else resolve(); });
-        });
+        db.prepare('DELETE FROM RESPUESTA_GUIA_I WHERE id_evaluacion = ?').run(id);
+        db.prepare('DELETE FROM RESPUESTA WHERE id_evaluacion = ?').run(id);
+        db.prepare('DELETE FROM RESULTADO_GLOBAL WHERE id_evaluacion = ?').run(id);
+        db.prepare('DELETE FROM RESULTADO_CATEGORIA WHERE id_evaluacion = ?').run(id);
+        db.prepare('DELETE FROM RESULTADO_DOMINIO WHERE id_evaluacion = ?').run(id);
+        db.prepare('DELETE FROM EVALUACION WHERE id_evaluacion = ?').run(id);
 
         res.json({ message: 'Canalización eliminada correctamente' });
     } catch (err) {
@@ -557,83 +457,58 @@ const getDatosGraficas = async (req, res, next) => {
     try {
         const db = getDB();
 
-        const nivelesGlobal = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT rg.resultado_final, COUNT(*) AS total
-                FROM RESULTADO_GLOBAL rg
-                JOIN EVALUACION e ON rg.id_evaluacion = e.id_evaluacion
-                WHERE e.estatus = 'Completada'
-                GROUP BY rg.resultado_final
-            `, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const nivelesGlobal = db.prepare(`
+            SELECT rg.resultado_final, COUNT(*) AS total
+            FROM RESULTADO_GLOBAL rg
+            JOIN EVALUACION e ON rg.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            GROUP BY rg.resultado_final
+        `).all();
 
-        const topCategorias = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT c.nombre AS nombre, AVG(rc.puntaje_porcentaje) AS promedio
-                FROM RESULTADO_CATEGORIA rc
-                JOIN CATEGORIA c ON rc.id_categoria = c.id_categoria
-                JOIN EVALUACION e ON rc.id_evaluacion = e.id_evaluacion
-                WHERE e.estatus = 'Completada'
-                GROUP BY c.nombre
-                ORDER BY promedio DESC
-                LIMIT 10
-            `, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const topCategorias = db.prepare(`
+            SELECT c.nombre AS nombre, AVG(rc.puntaje_porcentaje) AS promedio
+            FROM RESULTADO_CATEGORIA rc
+            JOIN CATEGORIA c ON rc.id_categoria = c.id_categoria
+            JOIN EVALUACION e ON rc.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            GROUP BY c.nombre
+            ORDER BY promedio DESC
+            LIMIT 10
+        `).all();
 
-        const topDominios = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT d.nombre AS nombre, AVG(rd.puntaje_porcentaje) AS promedio
-                FROM RESULTADO_DOMINIO rd
-                JOIN DOMINIO d ON rd.id_dominio = d.id_dominio
-                JOIN EVALUACION e ON rd.id_evaluacion = e.id_evaluacion
-                WHERE e.estatus = 'Completada'
-                GROUP BY d.nombre
-                ORDER BY promedio DESC
-                LIMIT 10
-            `, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const topDominios = db.prepare(`
+            SELECT d.nombre AS nombre, AVG(rd.puntaje_porcentaje) AS promedio
+            FROM RESULTADO_DOMINIO rd
+            JOIN DOMINIO d ON rd.id_dominio = d.id_dominio
+            JOIN EVALUACION e ON rd.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            GROUP BY d.nombre
+            ORDER BY promedio DESC
+            LIMIT 10
+        `).all();
 
-        const reportes = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT e.id_evaluacion, emp.nombre, rg.puntaje_bruto, rg.resultado_final
-                FROM EVALUACION e
-                JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
-                JOIN RESULTADO_GLOBAL rg ON rg.id_evaluacion = e.id_evaluacion
-                WHERE e.estatus = 'Completada'
-                ORDER BY CASE rg.resultado_final
-                    WHEN 'Muy Alto' THEN 1
-                    WHEN 'Alto' THEN 2
-                    WHEN 'Medio' THEN 3
-                    WHEN 'Bajo' THEN 4
-                    ELSE 5
-                END, rg.puntaje_bruto DESC, e.fecha_aplicacion DESC
-            `, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const reportes = db.prepare(`
+            SELECT e.id_evaluacion, emp.nombre, rg.puntaje_bruto, rg.resultado_final
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            JOIN RESULTADO_GLOBAL rg ON rg.id_evaluacion = e.id_evaluacion
+            WHERE e.estatus = 'Completada'
+            ORDER BY CASE rg.resultado_final
+                WHEN 'Muy Alto' THEN 1
+                WHEN 'Alto' THEN 2
+                WHEN 'Medio' THEN 3
+                WHEN 'Bajo' THEN 4
+                ELSE 5
+            END, rg.puntaje_bruto DESC, e.fecha_aplicacion DESC
+        `).all();
 
-        const canalizaciones = await new Promise((resolve, reject) => {
-            db.all(`
-                SELECT e.id_evaluacion, emp.nombre, e.fecha_aplicacion
-                FROM EVALUACION e
-                JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
-                WHERE e.requiere_canalizacion = 1 AND e.estatus = 'Completada'
-                ORDER BY e.fecha_aplicacion DESC
-            `, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const canalizaciones = db.prepare(`
+            SELECT e.id_evaluacion, emp.nombre, e.fecha_aplicacion
+            FROM EVALUACION e
+            JOIN EMPLEADO emp ON e.id_empleado = emp.id_empleado
+            WHERE e.requiere_canalizacion = 1 AND e.estatus = 'Completada'
+            ORDER BY e.fecha_aplicacion DESC
+        `).all();
 
         res.json({
             nivelesGlobal,

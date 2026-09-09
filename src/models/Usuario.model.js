@@ -1,89 +1,58 @@
 const { getDB } = require('../config/database');
 
-const findByEmail = async (email) => {
+const findByEmail = (email) => {
     const db = getDB();
-    return new Promise((resolve, reject) => {
-        db.get('SELECT * FROM USUARIO WHERE email = ?', [email], (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
+    return db.prepare('SELECT * FROM USUARIO WHERE email = ?').get(email);
 };
 
-const findById = async (id) => {
+const findById = (id) => {
     const db = getDB();
-    return new Promise((resolve, reject) => {
-        db.get(`
-            SELECT u.*, r.nombre_rol, e.*
-            FROM USUARIO u
-            LEFT JOIN ROL r ON u.id_rol = r.id_rol
-            LEFT JOIN EMPLEADO e ON u.id_empleado = e.id_empleado
-            WHERE u.id_usuario = ?
-        `, [id], (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
+    return db.prepare(`
+        SELECT u.*, r.nombre_rol, e.*
+        FROM USUARIO u
+        LEFT JOIN ROL r ON u.id_rol = r.id_rol
+        LEFT JOIN EMPLEADO e ON u.id_empleado = e.id_empleado
+        WHERE u.id_usuario = ?
+    `).get(id);
 };
 
-const findAll = async () => {
+const findAll = () => {
     const db = getDB();
-    return new Promise((resolve, reject) => {
-        db.all(`
-            SELECT u.*, r.nombre_rol 
-            FROM USUARIO u
-            LEFT JOIN ROL r ON u.id_rol = r.id_rol
-        `, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
-    });
+    return db.prepare(`
+        SELECT u.*, r.nombre_rol 
+        FROM USUARIO u
+        LEFT JOIN ROL r ON u.id_rol = r.id_rol
+    `).all();
 };
 
-const create = async ({ nombre, email, contraseña_hash, departamento, id_rol }) => {
+const create = ({ nombre, email, contraseña_hash, departamento, id_rol }) => {
     const db = getDB();
-    return new Promise((resolve, reject) => {
-        db.run(`
-            INSERT INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol)
-            VALUES (?, ?, ?, ?, ?)
-        `, [nombre, email, contraseña_hash, departamento, id_rol || 3], function(err) {
-            if (err) reject(err);
-            else resolve(this.lastID);
-        });
-    });
+    const result = db.prepare(`
+        INSERT INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol)
+        VALUES (?, ?, ?, ?, ?)
+    `).run(nombre, email, contraseña_hash, departamento, id_rol || 3);
+    return result.lastInsertRowid;
 };
 
-const updateRole = async (id_usuario, id_rol) => {
+const updateRole = (id_usuario, id_rol) => {
     const db = getDB();
-    return new Promise((resolve, reject) => {
-        db.run('UPDATE USUARIO SET id_rol = ? WHERE id_usuario = ?', [id_rol, id_usuario], function(err) {
-            if (err) reject(err);
-            else resolve(findById(id_usuario));
-        });
-    });
+    db.prepare('UPDATE USUARIO SET id_rol = ? WHERE id_usuario = ?').run(id_rol, id_usuario);
+    return findById(id_usuario);
 };
 
-const remove = async (id_usuario) => {
+const remove = (id_usuario) => {
     const db = getDB();
-    return new Promise((resolve, reject) => {
-        db.run('DELETE FROM USUARIO WHERE id_usuario = ?', [id_usuario], function(err) {
-            if (err) reject(err);
-            else resolve(this.changes > 0);
-        });
-    });
+    const info = db.prepare('DELETE FROM USUARIO WHERE id_usuario = ?').run(id_usuario);
+    return info.changes > 0;
 };
 
-const existsEmail = async (email) => {
+const existsEmail = (email) => {
     const db = getDB();
-    return new Promise((resolve, reject) => {
-        db.get('SELECT id_usuario FROM USUARIO WHERE email = ?', [email], (err, row) => {
-            if (err) reject(err);
-            else resolve(!!row);
-        });
-    });
+    const row = db.prepare('SELECT id_usuario FROM USUARIO WHERE email = ?').get(email);
+    return !!row;
 };
 
-const update = async (id_usuario, fields) => {
+const update = (id_usuario, fields) => {
     const db = getDB();
     const allowed = ['nombre', 'email', 'departamento', 'contraseña_hash', 'id_rol'];
     const setClauses = [];
@@ -100,13 +69,8 @@ const update = async (id_usuario, fields) => {
 
     values.push(id_usuario);
     const sql = `UPDATE USUARIO SET ${setClauses.join(', ')} WHERE id_usuario = ?`;
-
-    return new Promise((resolve, reject) => {
-        db.run(sql, values, function(err) {
-            if (err) reject(err);
-            else resolve(findById(id_usuario));
-        });
-    });
+    db.prepare(sql).run(...values);
+    return findById(id_usuario);
 };
 
 module.exports = {

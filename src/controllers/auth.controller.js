@@ -10,13 +10,7 @@ const login = async (req, res, next) => {
         }
 
         const db = getDB();
-        const user = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM USUARIO WHERE email = ?', [email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
+        const user = db.prepare('SELECT * FROM USUARIO WHERE email = ?').get(email);
         if (!user) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
@@ -28,8 +22,8 @@ const login = async (req, res, next) => {
 
         const token = jwt.sign(
             { id: user.id_usuario, email: user.email, rol: user.id_rol },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            process.env.JWT_SECRET || 'clave_temporal_para_demo',
+            { expiresIn: '7d' }
         );
 
         res.json({
@@ -55,27 +49,16 @@ const register = async (req, res, next) => {
         }
 
         const db = getDB();
-        const existCheck = await new Promise((resolve, reject) => {
-            db.get('SELECT id_usuario FROM USUARIO WHERE email = ?', [email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
+        const existCheck = db.prepare('SELECT id_usuario FROM USUARIO WHERE email = ?').get(email);
         if (existCheck) {
             return res.status(400).json({ error: 'El email ya está registrado' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await new Promise((resolve, reject) => {
-            db.run(`
-                INSERT INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol)
-                VALUES (?, ?, ?, ?, 3)
-            `, [nombre, email, hashedPassword, departamento], function(err) {
-                if (err) reject(err);
-                else resolve(this.lastID);
-            });
-        });
+        db.prepare(`
+            INSERT INTO USUARIO (nombre, email, contraseña_hash, departamento, id_rol)
+            VALUES (?, ?, ?, ?, 3)
+        `).run(nombre, email, hashedPassword, departamento);
 
         res.status(201).json({ message: 'Usuario registrado exitosamente' });
     } catch (err) {
